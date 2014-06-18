@@ -17,17 +17,110 @@
        ##tuneBeta = array, dim=c(PP,KK)
        ##tuneInt = vec, len = KK
        ##tuneZ =  list( vec(len = nn[x]])) length of list = KK
-##############################################################          
-
-
+############################################################## 
 #library(MASS)
-HLSM=function(X, Y, initialVals = NULL, priors = NULL, tune = NULL,
+
+HLSMrandomEF = function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,FullX = NULL, initialVals = NULL, priors = NULL, tune = NULL,
 	tuneIn = TRUE, TT = NULL,dd, niter,intervention)
 {
     #X and Y are provided as list. 
-    nn = sapply(1:length(X),function(x) nrow(X[[x]]))
-    KK = length(X)
-    PP = dim(X[[1]])[3]
+    if(class(Y) != 'list'){
+	if(dim(Y)[2] != 4){stop('Invalid data structure type')} }
+
+    if(class(Y) == 'list' & class(Y[[1]]) != 'matrix' & class(Y[[1]]) != 'data.frame'){stop('Invalid data structure type')}
+	
+    if(class(Y) == 'list'){ 
+        KK = length(Y)
+	if(dim(Y[[1]])[1] == dim(Y[[1]])[2]){
+		nn =sapply(1:length(Y),function(x) nrow(Y[[x]])) }
+
+	if(dim(Y[[1]])[1] != dim(Y[[1]])[2] & dim(Y[[1]])[2] == 4){
+		nn = sapply(1:length(Y), function(x)length(unique(c(Y[[x]]$Receiver,Y[[x]]$Sender))))
+		nodenames = lapply(1:length(Y), function(x) unique(c(Y[[x]]$Receiver,Y[[x]]$Sender)))
+	}	}
+
+    if(class(Y) != 'list'){
+	if(dim(Y)[2] == 4){
+		nid = unique(Y$id)
+		KK = length(nid)
+		nn = rep(0,KK)
+		df.list = list()
+		nodenames = list()
+		for(k in 1:KK){
+			df.sm = Y[which(Y$id == nid[k],),]
+			nn[k] = length(unique(c(df.sm$Receiver,df.sm$Sender)))
+			nodenames[[k]] = unique(c(df.sm$Receiver, df.sm$Sender))
+			df.list[[k]] = array(0, dim = c(nn[k],nn[k]))
+			dimnames(df.list[[k]])[[1]] = dimnames(df.list[[k]])[[2]] = nodenames[[k]]
+			for(i in 1:dim(df.sm)[1]){
+				df.list[[k]][df.sm$Sender[i],df.sm$Receiver[i]] = df.sm$Outcome[i]  #assume undirected graph and missing items are zeros
+			}
+		}
+		Y = df.list 
+	}}
+
+
+##prepare covariates#####
+#########################
+	if(!is.null(FullX) & !is.null(edgeCov) &!is.null(receiverCov) & !is.null(senderCov))(stop('FullX cannot be used when nodal or edge covariates are provided'))
+
+	if(is.null(FullX) & is.null(edgeCov) & is.null(receiverCov) & is.null(senderCov)){
+		X = lapply(1:KK,function(x) array(0, dim = c(nn[x],nn[x],1)))
+	}
+
+	if(is.null(FullX)){
+	if(!is.null(edgeCov) | !is.null(senderCov)| !is.null(receiverCov)){
+	  if(!is.null(edgeCov)){
+		if(class(edgeCov) != 'data.frame'){
+			stop('edgeCov must be of class data.frame')}
+		X1 = getEdgeCov(edgeCov, nn,nodenames)
+}else(X1 =NULL)
+  	  if(!is.null(senderCov)){
+		if(class(senderCov) != 'data.frame'){
+			stop('senderCov must be of class data.frame')}
+		X2 = getSenderCov(senderCov, nn,nodenames)
+}else(X2 = NULL)
+
+
+	  if(!is.null(receiverCov)){
+		if(class(receiverCov) != 'data.frame'){
+			stop('receiverCov must be of class data.frame')}
+		X3 = getReceiverCov(receiverCov, nn,nodenames)
+}else(X3 = NULL)	
+
+	X = lapply(1:KK, function(x){if(!is.null(X1)&!is.null(X2)&!is.null(X3)){
+		ncov = dim(X1[[x]])[3]+dim(X2[[x]])[3]+dim(X3[[x]])[3];
+		df = array(0, dim = c(nn[x],nn[x],ncov));
+		df[,,1:dim(X1[[x]])[3]] = X1[[x]];
+		df[,,(dim(X1[[x]])[3]+1):(dim(X1[[x]])[3]+dim(X2[[x]])[3])] = X2[[x]];
+		df[,,(dim(X1[[x]])[3]+dim(X2[[x]])[3]+1):(dim(X1[[x]])[3]+dim(X2[[x]])[3]+dim(X3[[x]])[3])] = X3[[x]] };
+		if(!is.null(X1)&!is.null(X2) & is.null(X3)){
+			ncov = dim(X1[[x]])[3]+dim(X2[[x]])[3];
+			df = array(0, dim = c(nn[x],nn[x],ncov));
+			df[,,1:dim(X1[[x]])[3]] = X1[[x]];
+			df[,,(dim(X1[[x]])[3]+1):(dim(X1[[x]])[3]+dim(X2[[x]])[3])] = X2[[x]]};
+		if(!is.null(X1)&!is.null(X3)&is.null(X2)){
+			ncov = dim(X1[[x]])[3]+dim(X3[[x]])[3];
+			df = array(0, dim = c(nn[x],nn[x],ncov));
+			df[,,1:dim(X1[[x]])[3]] = X1[[x]];
+			df[,,(dim(X1[[x]])[3]+1):(dim(X1[[x]])[3]+dim(X3[[x]])[3])] = X3[[x]]};
+	if(!is.null(X2)&!is.null(X3)&is.null(X1)){
+			ncov = dim(X2[[x]])[3]+dim(X3[[x]])[3];
+			df = array(0, dim = c(nn[x],nn[x],ncov));
+			df[,,1:dim(X2[[x]])[3]] = X2[[x]];
+			df[,,(dim(X2[[x]])[3]+1):(dim(X2[[x]])[3]+dim(X3[[x]])[3])] = X3[[x]]};
+	if(!is.null(X1)& is.null(X2)& is.null(X3)){
+			df = X1[[x]] };
+	if(is.null(X1)& !is.null(X2)& is.null(X3)){
+			df = X2[[x]] };
+	if(is.null(X1)& is.null(X2)& !is.null(X3)){
+			df = X3[[x]] };
+	return(df) } )
+}
+}
+	if(!is.null(FullX)) X = FullX
+
+    PP = dim(X[[1]])[3]	
     XX = unlist(X)
     YY = unlist(Y)
     YY[which(is.na(YY))] = 0
@@ -37,19 +130,19 @@ HLSM=function(X, Y, initialVals = NULL, priors = NULL, tune = NULL,
 
     if(is.null(priors)){
         MuBeta= rep(0,(PP+1)) 
-        SigmaBeta = rep(1,(PP+1)) 
+        VarBeta = rep(1,(PP+1)) 
         MuAlpha=0 
-        SigmaAlpha = 100 
+        VarAlpha = 1 
         MuZ = c(0,0)
-        VarZ = c(100,100)
-        PriorA = 4.5
-        PriorB = 17.5
+        VarZ = c(20,20)
+        PriorA = 100
+        PriorB = 150
     }else{
 	if(class(priors) != 'list')(stop("priors must be of class list, if not NULL"))
 	MuBeta = priors$MuBeta
-	SigmaBeta = priors$SigmaBeta
+	VarBeta = priors$VarBeta
 	MuAlpha = priors$MuAlpha
-	SigmaAlpha = priors$SigmaAlpha
+	VarAlpha = priors$VarAlpha
 	MuZ = priors$MuZ
 	VarZ = priors$VarZ
 	PriorA = priors$PriorA
@@ -61,11 +154,11 @@ HLSM=function(X, Y, initialVals = NULL, priors = NULL, tune = NULL,
         cc = 1
         for(i in 1:KK){  
             cc1 = (cc-1)+nn[i]
-            ZZ = t(replicate(nn[i],rnorm(dd,0,1)))
-            ZZ[1,]=c(0,0)
+            ZZ = t(replicate(nn[i],rnorm(dd,0,sqrt(10))))
+            ZZ[1,]=c(1,0)
             ZZ[2,2]=0
             if(ZZ[2,1] < ZZ[1,1]){
-                ZZ[2,1] = -1*ZZ[2,1]}
+                ZZ[2,1] = -1*(ZZ[2,1]-ZZ[1,1])+1}
             ZZ[3,2] = abs(ZZ[3,2])
             Z0[cc:cc1,] = ZZ
             cc = cc+nn[i]  
@@ -112,7 +205,7 @@ HLSM=function(X, Y, initialVals = NULL, priors = NULL, tune = NULL,
         print('Tuning the Sampler')
         for(counter in 1:a.number){
             rslt = MCMCfunction(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,TT = TT,beta = beta0 ,intercept = intercept0,
-		alpha = alpha0,MuAlpha = MuAlpha,SigmaAlpha = SigmaAlpha,MuBeta = MuBeta,SigmaBeta = SigmaBeta,MuZ = MuZ,
+		alpha = alpha0,MuAlpha = MuAlpha,SigmaAlpha = VarAlpha,MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,
 		VarZ = VarZ,tuneBetaAll = tuneBeta, tuneInt = tuneInt, tuneAlpha = tuneAlpha,tuneZAll = unlist(tuneZ),
 		niter = 200,PriorA = PriorA, PriorB = PriorB, intervention = intervention)
 
@@ -130,16 +223,18 @@ HLSM=function(X, Y, initialVals = NULL, priors = NULL, tune = NULL,
     print("Tuning is finished")  
 }
     rslt = MCMCfunction(nn=nn,PP=PP,KK=KK,dd= dd,XX = XX,YY = YY,ZZ = Z0,TT = TT,beta = beta0 ,intercept = intercept0,
-		alpha = alpha0,MuAlpha = MuAlpha,SigmaAlpha = SigmaAlpha,MuBeta = MuBeta,SigmaBeta = SigmaBeta,MuZ = MuZ,
+		alpha = alpha0,MuAlpha = MuAlpha,SigmaAlpha = VarAlpha,MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,
 		VarZ = VarZ,tuneBetaAll = tuneBeta, tuneInt = tuneInt, tuneAlpha = tuneAlpha,tuneZAll = unlist(tuneZ),
 		niter = niter,PriorA = PriorA, PriorB = PriorB,intervention = intervention)
 
     rslt$call = match.call()
+    rslt$tune = list(tuneAlpha = tuneAlpha, tuneZ = tuneZ, tuneBeta = tuneBeta, tuneInt = tuneInt)	
     class(rslt) = 'HLSM'
     rslt
 }
 
 
     
+
 
 

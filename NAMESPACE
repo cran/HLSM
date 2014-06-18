@@ -1,10 +1,13 @@
 useDynLib(HLSM)
 import("MASS", "coda")
 
-export("HLSM",
+export("HLSMrandomEF",
        "HLSMfixedEF",
        "plotDiagnostic",
        "plotLikelihood",
+       "plotHLSM.random.fit",
+       "plotHLSM.fixed.fit",
+       "plotHLSM.LS",	
        "print.HLSM",
        "print.summary.HLSM",
        "summary.HLSM",

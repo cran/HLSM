@@ -1,5 +1,5 @@
-\name{HLSM}
-\alias{HLSM}
+\name{HLSMrandomEF}
+\alias{HLSMrandomEF}
 \alias{HLSMfixedEF}
 \alias{print.HLSM}
 \alias{print.summary.HLSM}
@@ -10,19 +10,21 @@
 \alias{getLikelihood}
 \alias{getBeta}
 
-\title{Function to run the MCMC sampler in HLSM and extract the results
+\title{Function to run the MCMC sampler in random effect model (and HLSMfixedEF for fixed effect model)
 }
 
 \description{
-    Function to run the MCMC sampler to draw from the posterior distribution of intercept, slopes, latent positions, and intervention effect (if applicable). HLSM( ) estimates random slope and intercept; HLSMfixedEF( ) estimates fixed slope and intercept. 
+    Function to run the MCMC sampler to draw from the posterior distribution of intercept, slopes, latent positions, and intervention effect (if applicable). HLSMrandomEF( ) fits randome effect model; HLSMfixedEF( ) fits fixed effect model. 
 }
 
 \usage{
 
-HLSM(X, Y,initialVals = NULL, priors = NULL, tune = NULL,tuneIn = TRUE,
-	TT = NULL,dd, niter,intervention)
+HLSMrandomEF(Y,edgeCov=NULL, receiverCov = NULL, senderCov = NULL, 
+	FullX = NULL,initialVals = NULL, priors = NULL, tune = NULL,
+	tuneIn = TRUE,TT = NULL,dd, niter,intervention)
 
-HLSMfixedEF(X, Y, initialVals = NULL, priors = NULL, tune = NULL,
+HLSMfixedEF(Y,edgeCov=NULL, receiverCov = NULL, senderCov = NULL,
+	FullX = NULL, initialVals = NULL, priors = NULL, tune = NULL,
         tuneIn = TRUE, TT = NULL,dd, niter,intervention)
 
 getBeta(object, burnin = 0, thin = 1)
@@ -35,12 +37,25 @@ getLikelihood(object, burnin = 0, thin = 1)
 
 \arguments{
 
-    \item{X}{
-          list of numeric arrays of covariates for \code{K} different networks.
+    \item{Y}{input outcome for different networks. Y can either be 
+		i.list of socio-matrix for \code{K} different networks
+		ii. list of data frame with columns \code{Sender}, \code{Receiver} and \code{Outcome} for \code{K} different networks
+		iii. a dataframe with columns \code{id} to identify network, \code{Receiver}, \code{Sender} and \code{Outcome} for receiver nodes, sender nodes and the edge outcome respectively       
 }
-    \item{Y}{
-          list of socio-matrix for \code{K} different networks.        
+
+	\item{edgeCov}{a data frame to specify edge level covariates with a column for network id named \code{id}, a column for sender node named \code{Sender}, a column for receiver nodes named \code{Receiver} and columns for values of each edge level covariates.
 }
+
+	\item{receiverCov}{a data frame to specify nodal covariates as edge receivers, with a column for network id, named \code{id}, a column \code{Node} for node names, and the rest for respective node level covariates.
+}
+
+	\item{senderCov}{a data frame to specify nodal covariates as edge senders, with a column for network id, named \code{id}, a column \code{Node} for node names, and the rest for respective node level covariates.
+}
+
+	\item{FullX}{list of numeric arrays of dimension \code{n} by \code{n} by \code{p} of covariates for K different networks. When FullX is provided to the function, edgeCov, receiverCov and senderCov must be specified as NULL. 
+}
+		
+
 
     \item{initialVals}{
 	an optional list of values to initialize the chain. If \code{NULL} default initialization is used, else 
@@ -62,11 +77,15 @@ getLikelihood(object, burnin = 0, thin = 1)
 
     \code{priors=}
 
-	\code{list(MuBeta,SigmaBeta,MuAlpha,SigmaAlpha,MuZ,VarZ,PriorA,PriorB)}
+	\code{list(MuBeta,VarBeta,MuAlpha,VarAlpha,MuZ,VarZ,PriorA,PriorB)}
+       
+	\code{MuBeta} is a numeric vector of length PP + 1 specifying the mean of prior distribution for coefficients and intercept
+
+	\code{VarBeta} is a numeric vector for the variance of the prior distribution of coefficients and intercept. Its length is same as that of MuBeta.
 
      \code{MuAlpha} is a numeric variable specifying the mean of prior distribution of intervention effect. Default is 0.
 
-    \code{SigmaAlpha} is a numeric variable for the variance of the prior distribution of intervention effect. Default is 100.
+    \code{VarAlpha} is a numeric variable for the variance of the prior distribution of intervention effect. Default is 100.
 
     \code{MuZ} is a numeric vector of length same as the dimension of the latent space, specifying the prior mean of the latent positions.
  
@@ -128,6 +147,11 @@ getLikelihood(object, burnin = 0, thin = 1)
     \item{call}{
     the matched call.
  }
+
+\item{tune}{
+	final tuning values
+}	
+
 }
 
 \author{
@@ -149,7 +173,7 @@ initialVals = NULL
 niter = 10
 
 #Random effect HLSM on Pitt and Spillane data
-random.fit = HLSM(X = ps.edge.vars.mat,Y = ps.advice.mat,
+random.fit = HLSMrandomEF(Y = ps.advice.mat,FullX = ps.edge.vars.mat,
 	initialVals = initialVals,priors = priors,
 	tune = tune,tuneIn = FALSE,dd = 2,niter = niter,
 	intervention = 0)
@@ -168,7 +192,7 @@ getLikelihood(random.fit)
 
 #Fixed effect HLSM on Pitt and Spillane data 
 
-fixed.fit = HLSMfixedEF(X = ps.edge.vars.mat,Y = ps.advice.mat,
+fixed.fit = HLSMfixedEF(Y = ps.advice.mat,FullX = ps.edge.vars.mat,
 	initialVals = initialVals,priors = priors,
 	tune = tune,tuneIn = FALSE,dd = 2,niter = niter,
 	intervention = 0)

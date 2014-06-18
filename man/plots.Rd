@@ -1,29 +1,35 @@
 \name{plotDiagnostic}
 \alias{plotDiagnostic}
 \alias{plotLikelihood}
+\alias{plotHLSM.random.fit}
+\alias{plotHLSM.fixed.fit}
+\alias{plotHLSM.LS}
 
 \title{built-in plot functions for HLSM object}
 
 \description{ 
-	Functions to plot the likelihood and diagnostic-plot of posterior draws of the parameters from MCMC sample. 
+ plotLikelihood( ) plots the likelihood, and plotDiagnostic( ) plots diagnostic-plot of posterior draws of the parameters from MCMC sample. plotHLSM.random.fit( ) and plotHLSM.fixed.fit( ) are functions to plot mean-results from fitted models, and plotHLSM.LS( ) is for plotting the mean latent position estimates.
 }
 
 \usage{
 	plotLikelihood(object,burnin = 0, thin = 1)
 	plotDiagnostic(chain)
+	plotHLSM.random.fit(fitted.model,parameter,burnin=0,thin=1)
+	plotHLSM.fixed.fit(fitted.model, parameter,burnin=0,thin=1)
+	plotHLSM.LS(fitted.model,burnin=0,thin=1,...)
 }
 
 
 \arguments{
 
-	\item{object}{object of class 'HLSM' obtained as an output from \code{HLSM()} or \code{HLSMfixedEF()}
+	\item{object}{object of class 'HLSM' obtained as an output from \code{HLSMrandomEF()} or \code{HLSMfixedEF()}
 }
-
-	\item{burnin}{burnin value if want to plot burned chain}
-
+	\item{fitted.model}{model fit from either HLSMrandomEF() or HLSMfixedEF()}
+	\item{parameter}{parameter to plot; specified as \code{Beta} for slope coefficients, \code{Intercept} for intercept, and \code{Theta} for intervention effect}
+        \item{burnin}{numeric value to burn the chain for plotting the results from the 'HLSM'object }
 	\item{thin}{a numeric thinning value}
-
 	\item{chain}{a numeric vector of posterior draws of parameter of interest.}
+	\item{...}{other options}
 }
 
 
@@ -44,7 +50,7 @@ tune = NULL
 initialVals = NULL
 niter = 10
 
-random.fit = HLSM(X = ps.edge.vars.mat,Y = ps.advice.mat,
+random.fit = HLSMrandomEF(Y = ps.advice.mat,FullX = ps.edge.vars.mat,
 	initialVals = initialVals,priors = priors,
 	tune = tune,tuneIn = FALSE,dd = 2,niter = niter,
 	intervention = 0)
@@ -54,7 +60,9 @@ plotLikelihood(random.fit)
 intercept = getIntercept(random.fit)
 dim(intercept) ##is an array of dimension niter by 15
 plotDiagnostic(intercept[,1])
-
+plotHLSM.LS(random.fit)
+plotHLSM.random.fit(random.fit,parameter = 'Beta')
+plotHLSM.random.fit(random.fit,parameter = 'Intercept')
 ##look at the diagnostic plot of intercept for the first school
 
 

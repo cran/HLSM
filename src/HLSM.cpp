@@ -205,12 +205,12 @@ void updateZ(double *XX,double *YY,double *ZZ,int *TT,int *nn, int *pp,int *dd,d
       	      for(int kk = 0 ; kk < dd[0] ; kk++){ 
 			  ZnewSm[kk]  = ZZsm[kk] + tuneZ[ii]*rnorm(0.0,1.0);
 			  if(ii == 1  && kk == 0){ //Positivity constraint on Znew[2,1]
-				  if(ZnewSm[kk] < 0){
-					  ZnewSm[kk] = -1.0*ZnewSm[kk];
+				  if(ZnewSm[kk] < Znew[0]){
+					  ZnewSm[kk] = -1.0*(ZnewSm[kk]-Znew[0])+1.0;
 				  }
 			  }
 			  if(ii == 1 && kk == 1){ //set Znew[2,2] = 0
-			      ZnewSm[kk] = 0;
+			      ZnewSm[kk] = 0.0;
 		          }
                           if((kk == 1 && ii == 2)){ //Positivity constraint on Znew[3,2]
 		      		  if(ZnewSm[kk] < 0){
@@ -418,7 +418,8 @@ void sampleFixedIntervention(int *niter, double *XX,double *YY,double *ZZ,int *T
        	          	for(int nZ=0; nZ < nn[kk]; nZ++){
        				for(int dZ=0; dZ < dd[0]; dZ++){
 					ZZ[nZ+dZ*nn[kk]+dd[0]*ss] = ZMat[nZ+dZ*nn[kk]];
-				        ZZFinal[nZ+ss+ss2*dZ+ii*sumAll*dd[0]] = ZMat[nZ+dZ*nn[kk]];
+				       // ZZFinal[nZ+ss+ss2*dZ+ii*sumAll*dd[0]] = ZMat[nZ+dZ*nn[kk]];
+					ZZFinal[nZ+dZ*nn[kk]+dd[0]*ss+ii*sumAll*dd[0]] = ZMat[nZ+dZ*nn[kk]];
 					D[dZ] += square(ZMat[nZ+dZ*nn[kk]] - 0.0);
 				}
 					accZAll[nZ+ss] = accZ[nZ];
@@ -526,11 +527,15 @@ void sampleRandomIntervention(int *niter, double *XX,double *YY,double *ZZ,int *
 			readX(XX,XMat,nn,PP[0],kk);
 			getZ(ZZ,ZMat,nn,dd[0],kk,ss);
 
-           		//make sure beta has pp column and KK row
+           		//make sure beta has pp rows and KK columns
 			for(int ll = 0; ll<PP[0];ll++){
 				betaKK[ll] = beta[ll+kk*PP[0]];
 				accbeta[ll] = accBetaAll[ll+kk*PP[0]];
 				tuneBeta[ll] = tuneBetaAll[ll+kk*PP[0]];
+				//betaKK[ll] = beta[kk+ll*KK[0]];
+				//accbeta[ll] = accBetaAll[kk+ll*KK[0]];
+				//tuneBeta[ll] = tuneBetaAll[kk+ll*KK[0]];
+
 			}
 			accInt = accIntAll[kk];
 			
@@ -552,12 +557,13 @@ void sampleRandomIntervention(int *niter, double *XX,double *YY,double *ZZ,int *
 				beta[pp+kk*PP[0]] = betaKK[pp];
        				betaFinal[ii+pp*niter[0]+kk*PP[0]*niter[0]] = betaKK[pp];
 				accBetaAll[pp+kk*PP[0]] = accbeta[pp];
-       			}
+   						}
 		       
        	          	for(int nZ=0; nZ < nn[kk]; nZ++){
        				for(int dZ=0; dZ < dd[0]; dZ++){
 					ZZ[nZ+dZ*nn[kk]+dd[0]*ss] = ZMat[nZ+dZ*nn[kk]];
-				        ZZFinal[nZ+ss+ss2*dZ+ii*sumAll*dd[0]] = ZMat[nZ+dZ*nn[kk]];
+				//        ZZFinal[nZ+ss+ss2*dZ+ii*sumAll*dd[0]] = ZMat[nZ+dZ*nn[kk]];
+					ZZFinal[nZ+dZ*nn[kk]+dd[0]*ss+ii*sumAll*dd[0]] = ZMat[nZ+dZ*nn[kk]];
 					D[dZ] += square(ZMat[nZ+dZ*nn[kk]] - 0.0);
 				}
 					accZAll[nZ+ss] = accZ[nZ];
@@ -619,7 +625,7 @@ void sampleRandomIntervention(int *niter, double *XX,double *YY,double *ZZ,int *
 	}
 	B = B/2.0 + PriorB[0];
 	double A = PriorA[0] + KK[0]/2.0;
-	SigmaBeta[PP[0]] = 1.0/rgamma(A,1/B);
+	SigmaBeta[PP[0]] = 1.0/rgamma(A,1/B);	
 	postVar[ii+niter[0]*PP[0]] = SigmaBeta[PP[0]];
 
 	    //Update varaince for ZZ    
