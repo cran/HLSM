@@ -31,10 +31,11 @@ void WriteRow(double *XX, int ii, double *Xvec, int *nn, int *dd)
 }
 //extract Y and Z matrix for KK network with nn rows and pp columns
 
+
 void getY(double *Mat,double *NewMat, int *nn,int kk){
 	int ss = 0.0;
 	if(kk > 0){
-	for(int ll = 0;ll < (kk-1.0); ll++){
+	for(int ll = 0;ll < kk; ll++){
 		ss += nn[ll]*nn[ll];
 	}
 	}
@@ -44,10 +45,17 @@ void getY(double *Mat,double *NewMat, int *nn,int kk){
 			}
 		}
 }
-void getZ(double *Mat,double *NewMat, int *nn,int dd,int kk,int ss){
+
+void getZ(double *Mat,double *NewMat, int *nn,int dd,int kk){
+	int ss = 0.0;
+	if(kk > 0){
+	for(int ll = 0;ll < kk; ll++){
+		ss += (dd*nn[ll]);
+		}
+	}
 	for(int xx= 0;xx < nn[kk]; xx++){
 		for(int yy =0; yy < dd; yy++){
-			NewMat[xx+yy*nn[kk]] = Mat[xx+yy*nn[kk]+dd*ss];
+			NewMat[xx+yy*nn[kk]] = Mat[xx+yy*nn[kk]+ss];
 			}
 		}
 }
@@ -56,7 +64,7 @@ void getZ(double *Mat,double *NewMat, int *nn,int dd,int kk,int ss){
 void readX(double *X,double *newX, int *nn, int pp, int kk){
     	int ss = 0.0;
 	if(kk > 0){
-	for(int ll = 0;ll < (kk-1.0); ll++){
+	for(int ll = 0;ll < kk; ll++){
 		ss += nn[ll]*nn[ll];
 	}
 	}
@@ -68,7 +76,6 @@ void readX(double *X,double *newX, int *nn, int pp, int kk){
 		}
 	}
 }
-
 //compute distance matrix
 void distMat(int *nn, int *dd, double *ZZ, double *dMat){
     int ii,jj,kk;
@@ -168,7 +175,7 @@ void AllLogLik(double *X, double *Y, double *Z, int *T, int *nn, int *pp, int *d
 		 ZMat = new double[nn[kk]*dd[0]];
 		 getY(Y,YMat,nn,kk);
 		 readX(X,XMat,nn,pp[0],kk);
-		 getZ(Z,ZMat,nn,dd[0],kk,ss);
+		 getZ(Z,ZMat,nn,dd[0],kk);
 		 //use the X Y and Z for that group.
 	         FullLogLik(beta, YMat, XMat, ZMat, alpha, &T[kk], intercept,&nn[kk],pp,dd,&Val);
 		 lliknew[0] = lliknew[0] + Val;
@@ -403,7 +410,7 @@ void sampleFixedIntervention(int *niter, double *XX,double *YY,double *ZZ,int *T
 			//read X, Y, X for a network
                         getY(YY,YMat,nn,kk);
 			readX(XX,XMat,nn,PP[0],kk);
-			getZ(ZZ,ZMat,nn,dd[0],kk,ss);
+			getZ(ZZ,ZMat,nn,dd[0],kk);
 		
 			for(int zz =0;zz < nn[kk];zz++){
 				accZ[zz] = accZAll[zz+ss];
@@ -525,7 +532,7 @@ void sampleRandomIntervention(int *niter, double *XX,double *YY,double *ZZ,int *
 			//read X, Y, X for a network
                         getY(YY,YMat,nn,kk);
 			readX(XX,XMat,nn,PP[0],kk);
-			getZ(ZZ,ZMat,nn,dd[0],kk,ss);
+			getZ(ZZ,ZMat,nn,dd[0],kk);
 
            		//make sure beta has pp rows and KK columns
 			for(int ll = 0; ll<PP[0];ll++){
