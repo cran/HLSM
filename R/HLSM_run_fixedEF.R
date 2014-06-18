@@ -1,0 +1,146 @@
+####Function to run the sampler#####
+##SPECIFYING PRIORS######
+#########################
+##if priors = NULL => uses randomly generated priors
+##else: priors is a list of following objects:
+        ##MuBeta:= prior mean for betas & intercepts; 
+        ##SigmaBeta:= prior variance for betas & intercept;
+        ##MuAlpha:= prior mean for alpha; 
+        ##SigmaAlpha:= prior variance for alpha;
+        ##MuZ; VarZ;
+        ##PriorA; PriorB 
+##TUNING PARAMETERS#######
+##########################
+##if tune = NULL => uses auto tuning
+##else: tune is a list of following objects:
+       ##tuneAlpha = 0.9
+       ##tuneBeta = vec, PP
+       ##tuneInt = vec, len = 1
+       ##tuneZ =  list( vec(len = nn[x]])) length of list = KK
+##############################################################          
+#library(MASS)
+HLSMfixedEF= function(X, Y, initialVals = NULL, priors = NULL, tune = NULL,
+        tuneIn = TRUE, TT = NULL,dd, niter,intervention)
+{
+    #X and Y are provided as list. 
+    nn = sapply(1:length(X),function(x) nrow(X[[x]]))
+    KK = length(X)
+    PP = dim(X[[1]])[3]
+    XX = unlist(X)
+    YY = unlist(Y)
+    YY[which(is.na(YY))] = 0
+    XX[which(is.na(XX))] = 0
+    #Priors
+
+    if(is.null(priors)){
+	MuBeta= rep(0,(PP+1)) 
+	SigmaBeta = rep(1,(PP+1)) 
+        MuAlpha=0 
+        SigmaAlpha = 100 
+        MuZ = c(0,0)
+        VarZ = c(100,100)
+        PriorA = 4.5
+        PriorB = 17.5
+     }else{
+	if(class(priors) != 'list')(stop("priors must be of class list, if not NULL"))
+	MuBeta = priors$MuBeta
+	SigmaBeta = priors$SigmaBeta
+	MuAlpha = priors$MuAlpha
+	SigmaAlpha = priors$SigmaAlpha
+	MuZ = priors$MuZ
+	VarZ = priors$VarZ
+	PriorA = priors$PriorA
+	PriorB = priors$PriorB
+  }
+##starting values
+    if(is.null(initialVals)){
+        Z0 = array(0, dim = c(sum(nn),dd))
+        cc = 1
+        for(i in 1:KK){  
+            cc1 = (cc-1)+nn[i]
+            ZZ = t(replicate(nn[i],rnorm(dd,0,1)))
+            ZZ[1,]=c(0,0)
+            ZZ[2,2]=0
+            if(ZZ[2,1] < ZZ[1,1]){
+                ZZ[2,1] = -1*ZZ[2,1]}
+            ZZ[3,2] = abs(ZZ[3,2])
+            Z0[cc:cc1,] = ZZ
+            cc = cc+nn[i]  
+    }
+        Z0 = unlist(Z0)
+        beta0 = rnorm(PP,0,1)
+        intercept0  = rnorm(1, 0,1)
+        if(intervention == 1){    alpha0=rnorm(1, 0, 1) }
+        print("Starting Values Set")
+    }else{
+	if(class(initialVals) != 'list')(stop("initialVals must be of class list, if not NULL"))
+	Z0 = initialVals$ZZ
+	beta0 = initialVals$beta
+	intercept0 = initialVals$intercept
+	if(intervention == 1){ alpha0 = initialVals$alpha}
+	}
+
+    if(intervention == 0){
+        alpha0 = 0
+        TT = rep(0, KK)
+    }
+
+###tuning parameters#####
+    if(is.null(tune)){
+            a.number = 5
+            tuneAlpha = 0.9
+            tuneBeta = rep(1,PP)
+            tuneInt = 0.2
+            tuneZ =  lapply(1:KK,function(x) rep(1.2,nn[x]))          
+            } else{
+         	if(class(tune) != 'list')(stop("tune must be of class list, if not NULL"))
+                 a.number = 1
+                 tuneAlpha = tune$tuneAlpha
+                 tuneBeta = tune$tuneBeta
+                 tuneInt = tune$tuneInt
+                 tuneZ = tune$tuneZ
+          }       
+  
+###Tuning the Sampler####
+    do.again = 1
+    tuneX = 1
+    if(tuneIn == TRUE){
+    while(do.again ==1){
+        print('Tuning the Sampler')
+        for(counter in 1:a.number)
+{ 
+            rslt = MCMCfixedEF(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,TT = TT,
+		beta = beta0 ,intercept = intercept0,alpha = alpha0,MuAlpha = MuAlpha,SigmaAlpha = SigmaAlpha,
+		MuBeta = MuBeta,SigmaBeta = SigmaBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneInt = tuneInt,
+		tuneAlpha = tuneAlpha,tuneZAll = unlist(tuneZ),niter = 200,PriorA = PriorA, PriorB = PriorB, 
+		intervention = intervention)
+
+            tuneAlpha = adjust.my.tune(tuneAlpha, rslt$acc$alpha,1)
+     	    tuneZ = lapply(1:KK,function(x)adjust.my.tune(tuneZ[[x]], rslt$acc$Z[[x]], 2))
+            tuneBeta = adjust.my.tune(tuneBeta, rslt$acc$beta,1)
+            tuneInt =  adjust.my.tune(tuneInt,rslt$acc$intercept,1)
+            print(paste('TuneDone = ',tuneX))
+            tuneX = tuneX+1
+    }
+    extreme = lapply(1:KK,function(x)which.suck(rslt$acc$Z[[x]],2))
+    do.again = max(sapply(extreme, length)) > 5
+ 
+}
+    print("Tuning is finished")  
+}
+    rslt = MCMCfixedEF(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,TT = TT,
+		beta = beta0 ,intercept = intercept0,alpha = alpha0,MuAlpha = MuAlpha,SigmaAlpha = SigmaAlpha,
+		MuBeta = MuBeta,SigmaBeta = SigmaBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneInt = tuneInt, 
+		tuneAlpha = tuneAlpha,tuneZAll = unlist(tuneZ),niter = niter,PriorA = PriorA, PriorB = PriorB, 
+		intervention = intervention)
+
+    rslt$call = match.call()
+    class(rslt) = 'HLSM'
+    rslt
+}
+
+
+    
+
+
+
