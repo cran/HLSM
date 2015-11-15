@@ -27,16 +27,21 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,FullX
     if(class(Y) != 'list'){
 	if(dim(Y)[2] != 4){stop('Invalid data structure type')} }
 
-    if(class(Y) == 'list' & class(Y[[1]]) != 'matrix' & class(Y[[1]]) != 'data.frame'){stop('Invalid data structure type')}
-	
+    if(class(Y) == 'list' & class(Y[[1]]) != 'matrix' & class(Y[[1]]) != 'data.frame'){stop('Invalid data structure type')}	
     if(class(Y) == 'list'){ 
         KK = length(Y)
-	if(dim(Y[[1]])[1] == dim(Y[[1]])[2]){
-		nn =sapply(1:length(Y),function(x) nrow(Y[[x]])) }
+	check = 1
+	for(cc in 1:KK){
+	    check =  check *(dim(Y[[cc]])[1] == dim(Y[[cc]])[2])
+	}
+	if(check == 1){	
+	    nn =sapply(1:KK,function(x) nrow(Y[[x]])) 
+	    nodenames = lapply(1:KK,function(x) dimnames(Y[[x]])[[1]])
+		}
 
-	if(dim(Y[[1]])[1] != dim(Y[[1]])[2] & dim(Y[[1]])[2] == 4){
-		nn = sapply(1:length(Y), function(x)length(unique(c(Y[[x]]$Receiver,Y[[x]]$Sender))))
-		nodenames = lapply(1:length(Y), function(x) unique(c(Y[[x]]$Receiver,Y[[x]]$Sender)))
+	if(check == 0 & dim(Y[[1]])[2] == 4){
+		nn = sapply(1:KK, function(x)length(unique(c(Y[[x]]$Receiver,Y[[x]]$Sender))))
+		nodenames = lapply(1:KK, function(x) unique(c(Y[[x]]$Receiver,Y[[x]]$Sender)))
 	}	}
 
     if(class(Y) != 'list'){

@@ -1,5 +1,10 @@
 useDynLib(HLSM)
 import("MASS", "coda")
+importFrom("grDevices", "dev.new", "dev.off", "pdf")
+importFrom("graphics", "layout", "par", "plot", "rect", "segments",
+             "text")
+importFrom("stats", "quantile", "rnorm", "sd")
+
 
 export("HLSMrandomEF",
        "HLSMfixedEF",
@@ -19,4 +24,7 @@ export("HLSMrandomEF",
        
 
 S3method('print','HLSM')
+S3method('print','summary.HLSM')
 S3method('summary','HLSM')
+
+

@@ -67,4 +67,27 @@ plotHLSM.random.fit(random.fit,parameter = 'Intercept')
 ##look at the diagnostic plot of intercept for the first school
 
 
+
+#fitting with senderCov and receiverCov
+YY = lapply(1:4,function(x)ps.advice.mat[[x]])
+nn = sapply(1:4,function(x)nrow(YY[[x]]))
+Scov = data.frame(array(NA,dim=c(sum(nn),4)))
+a=b=0
+for(sid in 1:4){
+    a = b+1
+    b = b+nn[sid]    
+    Scov[a:b,1]= sid
+    Scov[a:b,2]= dimnames(YY[[sid]])[[1]]
+    Scov[a:b,3] = rnorm(nn[sid],0,1)
+    Scov[a:b,4] = rnorm(nn[sid],0,1)
+}
+names(Scov)= c('id','Node','X1','X2')
+
+model1 = HLSMfixedEF(Y=YY,senderCov=Scov,receiverCov=Scov,
+                     niter=10,dd=2,tuneIn=FALSE,intervention=0)
+
+model2 = HLSMrandomEF(Y=YY,senderCov=Scov,receiverCov=Scov,
+                      niter=10,dd=2,tuneIn=FALSE,intervention=0)
+
+
 }
