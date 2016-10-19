@@ -29,7 +29,3 @@ fixed.fit = HLSMfixedEF(X = ps.edge.vars.mat,Y = ps.advice.mat,
 summary(fixed.fit)
 names(fixed.fit)
 
-
-
-
-
