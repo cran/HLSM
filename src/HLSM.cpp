@@ -157,16 +157,16 @@ void FullLogLik(double *beta, double *YY, double *XX, double *ZZ, double *alpha,
 void AllLogLik(double *X, double *Y, double *Z, int *T, int *nn, int *pp, int *dd, int *KK, double *beta, double *intercept,double *alpha, double *lliknew)
 {
 	double Val;
-	int slen = KK[0]+1;
-	double* sumn = 0; // need this to store the updated parameters
-	sumn = new double[slen];
-	sumn[0] = 0; 
-	for(int iz =0; iz < KK[0]; iz++){
-		sumn[iz+1] = sumn[iz] + nn[iz];
-	}
+//	int slen = KK[0]+1;
+//	double* sumn = 0; // need this to store the updated parameters
+//	sumn = new double[slen];
+//	sumn[0] = 0; 
+//	for(int iz =0; iz < KK[0]; iz++){
+//		sumn[iz+1] = sumn[iz] + nn[iz];
+//	}
 	lliknew[0] = 0.0;
 	for(int kk = 0; kk < KK[0]; kk++){
-         	 int ss = sumn[kk];
+        // 	 int ss = sumn[kk];
 		 double* XMat = 0;
 	   	 XMat = new double[nn[kk]*nn[kk]*pp[0]];
 		 double* YMat = 0;
@@ -183,7 +183,7 @@ void AllLogLik(double *X, double *Y, double *Z, int *T, int *nn, int *pp, int *d
 	 	 delete[] YMat;
 	 	 delete[] ZMat;
 	 }
-	delete[] sumn;
+//	delete[] sumn;
 }
 
 		
@@ -398,7 +398,7 @@ void sampleFixedIntervention(int *niter, double *XX,double *YY,double *ZZ,int *T
 		}
 		for(int kk = 0; kk < KK[0]; kk++){
 			int ss = sumn[kk];
-			int ss2 = sumn[kk + 1];
+		//	int ss2 = sumn[kk + 1];
 		        double* accZ = 0;
                        	accZ = new double[nn[kk]];	
 			double* tuneZ = 0;
@@ -518,7 +518,7 @@ void sampleRandomIntervention(int *niter, double *XX,double *YY,double *ZZ,int *
 		}
 		for(int kk = 0; kk < KK[0]; kk++){
 			int ss = sumn[kk];
-			int ss2 = sumn[kk + 1];
+	//		int ss2 = sumn[kk + 1];
 		        double* accZ = 0;
                        	accZ = new double[nn[kk]];	
 			double* tuneZ = 0;

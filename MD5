@@ -1,4 +1,4 @@
-5faeb9ec0666ae3c12da2d408fde2561 *DESCRIPTION
+e55b774522396bb02b4f480b86922082 *DESCRIPTION
 20f3fabdc5a8612405245960c411b76c *NAMESPACE
 9690b1935164577d4e5944002a080ec1 *R/HLSM_C.R
 83820fdc736245b3d20e71029f6cd55b *R/HLSM_C_fixedEf.R
@@ -6,7 +6,7 @@
 b520c6d373a7786bba1af01f5fc6b430 *R/HLSM_run_fixedEF.R
 8f6dfa1f70e45e4184de1ed14c050a2c *R/PlottingHLSMFitsfromHLSMPackage.r
 3e5f68a6ae392d4a01ad0a99ace5aa37 *R/adjust.my.tune.R
-01668e16b8c3c3019f2bfe3cab27cef8 *R/covFunction.R
+302528821938f7854fbcc4ff5fdf0f51 *R/covFunction.R
 2654f0aa4b2d253cf32627454c5adfe8 *R/helper.R
 96e4dd0eb04a806ba9f1c002812e78d3 *R/plotDiagnostic.R
 142fd7654155a1c80a8f90717c908d99 *R/plotLikelihood.R
@@ -21,4 +21,4 @@ ce1ef4078dcafeae1fefdbdb6c3bbb4a *data/schoolsAdviceData.RData
 7f28f8d0b95e0bd8cfe9107f657f948c *man/HLSM-data.Rd
 94b9ad8a7c520d28faa66ae39d70bc08 *man/HLSM_run.Rd
 c53160a73cc9f3a4ee8f359721352ca5 *man/plots.Rd
-3cc6098e5ec3b6281979b8fd2af5b108 *src/HLSM.cpp
+ff75b6676de3202035517f5f228fed40 *src/HLSM.cpp
