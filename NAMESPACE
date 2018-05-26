@@ -1,4 +1,4 @@
-useDynLib(HLSM)
+useDynLib(HLSM,.registration=TRUE)
 import("MASS", "coda", "igraph")
 importFrom("grDevices", "dev.new", "dev.off", "pdf")
 importFrom("graphics", "layout", "par", "plot", "rect", "segments",
