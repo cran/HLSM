@@ -43,7 +43,7 @@ plotHLSM.random.fit=function(fitted.model, parameter, burnin = 0, thin = 1){
 			plot(x, int.quantiles[,3], pch=".",
 				 ylim=c(min(int.quantiles), max(int.quantiles)),
 				 col="white", xlab="Network",
-				 ylab=expression(beta[pie]),
+				 ylab=expression(beta),
 				 main=paste("Beta", pie))
 			rect((x-0.05), int.quantiles[,1], (x+0.05),
 				int.quantiles[,5], col=colors[3], border=NA)
@@ -107,7 +107,7 @@ plotHLSM.fixed.fit=function(fitted.model, parameter, burnin =0, thin = 1){
                       
 		plot(x, int.quantiles[,3], pch=".", lab=c(p, 5, 7), 
 			xlim=c(0.75, p+0.25), ylim=c(min(int.quantiles), max(int.quantiles)),
-			col="white", xlab="Network", ylab=expression(beta), main=paste("Betas"))
+			col="white", ylab=expression(beta), main=paste("Betas"))
 		rect((x-0.05), int.quantiles[,1], (x+0.05), int.quantiles[,5], col=colors[3], border=NA)
 		rect((x-0.15), int.quantiles[,2], (x+0.15), int.quantiles[,4], col=colors[2], border=NA)
 		segments((x-0.15), int.quantiles[,3], (x+0.15), int.quantiles[,3], lwd=2, col=colors[1])

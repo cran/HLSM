@@ -196,7 +196,6 @@ getLikelihood(object, burnin = 0, thin = 1)
 \examples{
 
 library(HLSM)
-
 #Set values for the inputs of the function
 priors = NULL
 tune = NULL
@@ -204,7 +203,7 @@ initialVals = NULL
 niter = 10
 
 #Random effect HLSM on Pitt and Spillane data
-random.fit = HLSMrandomEF(Y = ps.advice.mat,FullX = ps.edge.vars.mat,
+random.fit <- HLSMrandomEF(Y = ps.advice.mat,FullX = ps.edge.vars.mat,
 	initialVals = initialVals,priors = priors,
 	tune = tune,tuneIn = FALSE,dd = 2,niter = niter,
 	intervention = 0)
@@ -214,16 +213,16 @@ summary(random.fit)
 names(random.fit)
 
 #extract results without burning and thinning
-Beta = getBeta(random.fit)
-Intercept = getIntercept(random.fit)
-LS = getLS(random.fit)
-Likelihood = getLikelihood(random.fit)
+Beta <- getBeta(random.fit)
+Intercept <- getIntercept(random.fit)
+LS <- getLS(random.fit)
+Likelihood <- getLikelihood(random.fit)
 
 ##Same can be done for fixed effect model
 
 #Fixed effect HLSM on Pitt and Spillane data 
 
-fixed.fit = HLSMfixedEF(Y = ps.advice.mat,FullX = ps.edge.vars.mat,
+fixed.fit <- HLSMfixedEF(Y = ps.advice.mat,FullX = ps.edge.vars.mat,
 	initialVals = initialVals,priors = priors,
 	tune = tune,tuneIn = FALSE,dd = 2,niter = niter,
 	intervention = 0)

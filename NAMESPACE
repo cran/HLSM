@@ -3,20 +3,24 @@ import("MASS", "coda", "igraph")
 importFrom("grDevices", "dev.new", "dev.off", "pdf")
 importFrom("graphics", "layout", "par", "plot", "rect", "segments",
              "text")
-importFrom("stats", "cmdscale", "quantile", "rnorm", "sd")
+importFrom("stats", "cmdscale", "quantile", "rnorm", "sd", "acf", "aggregate", "setNames")
 
-export("HLSMrandomEF",
-       "HLSMfixedEF",
-       "plotDiagnostic",
-       "plotLikelihood",
-       "plotHLSM.random.fit",
-       "plotHLSM.fixed.fit",
-       "plotHLSM.LS",	
+export( "HLSMrandomEF",
+        "HLSMfixedEF",
+        "plotDiagnostic",
+        "plotLikelihood",
+        "plotHLSM.random.fit",
+        "plotHLSM.fixed.fit",
+        "plotHLSM.LS",	
 	"getBeta",
 	"getIntercept",
 	"getAlpha",
 	"getLS",
-	"getLikelihood")
+	"getLikelihood",
+        "HLSMDiag",
+        "HLSMcovplots"
+        
+)
        
 
 S3method('print','HLSM')
