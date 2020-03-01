@@ -21,19 +21,20 @@
 #library(MASS)
 HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
                       FullX = NULL, initialVals = NULL, priors = NULL, tune = NULL,
-        tuneIn = TRUE, TT = NULL,dd, niter,intervention)
+        tuneIn = TRUE, TT = NULL,dd, niter)
 {
-
+  intervention <- 0
   #X and Y are provided as list. 
     if(class(Y) != 'list'){
 	if(dim(Y)[2] != 4){stop('Invalid data structure type')} }
 
-    if(class(Y) == 'list' & class(Y[[1]]) != 'matrix' & class(Y[[1]]) != 'data.frame'){stop('Invalid data structure type')}
+   # if(class(Y) == 'list' & class(Y[[1]]) != 'matrix' & class(Y[[1]]) != 'data.frame'){stop('Invalid data structure type')}
 	
     if(class(Y) == 'list'){ 
         KK = length(Y)
 	if(dim(Y[[1]])[1] == dim(Y[[1]])[2]){
-		nn =sapply(1:length(Y),function(x) nrow(Y[[x]])) }
+            nn =sapply(1:length(Y),function(x) nrow(Y[[x]]))
+        nodenames=lapply(1:length(Y), function(x) rownames(Y[[x]]))}
 
 	if(dim(Y[[1]])[1] != dim(Y[[1]])[2] & dim(Y[[1]])[2] == 4){
 		nn = sapply(1:length(Y), function(x)length(unique(c(Y[[x]]$Receiver,Y[[x]]$Sender))))
@@ -236,8 +237,8 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
             tuneX = tuneX+1
     }
     extreme = lapply(1:KK,function(x)which.suck(rslt$acc$Z[[x]],2))
-    do.again = max(sapply(extreme, length)) > 5
- 
+    do.again = max(sapply(extreme, length)) > max(nn)
+
 }
     print("Tuning is finished")  
 }

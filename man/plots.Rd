@@ -4,11 +4,14 @@
 \alias{plotHLSM.random.fit}
 \alias{plotHLSM.fixed.fit}
 \alias{plotHLSM.LS}
+\alias{HLSMcovplots}
+\alias{HLSMfixed.covplots}
+\alias{HLSMrandom.covplots}
 
 \title{built-in plot functions for HLSM object}
 
 \description{ 
- plotLikelihood( ) plots the likelihood, and plotDiagnostic( ) plots diagnostic-plot of posterior draws of the parameters from MCMC sample. plotHLSM.random.fit( ) and plotHLSM.fixed.fit( ) are functions to plot mean-results from fitted models, and plotHLSM.LS( ) is for plotting the mean latent position estimates.
+ A suite of functions for plotting HLSM model fits. HSLMcovplots is the most recent function to plot posterior distribution summaries.  plotLikelihood( ) plots the likelihood, and plotDiagnostic( ) plots diagnostic-plot of posterior draws of the parameters from MCMC sample. plotHLSM.random.fit( ) and plotHLSM.fixed.fit( ) are functions to plot mean-results from fitted models, and plotHLSM.LS( ) is for plotting the mean latent position estimates.
 }
 
 \usage{
@@ -17,6 +20,7 @@
 	plotHLSM.random.fit(fitted.model,parameter,burnin=0,thin=1)
 	plotHLSM.fixed.fit(fitted.model, parameter,burnin=0,thin=1)
 	plotHLSM.LS(fitted.model,pdfname=NULL,burnin=0,thin=1,...)
+	HLSMcovplots(fitted.model, burnin=0, thin=1)
 }
 
 
@@ -53,11 +57,13 @@ niter = 10
 
 random.fit = HLSMrandomEF(Y = ps.advice.mat,FullX = ps.edge.vars.mat,
 	initialVals = initialVals,priors = priors,
-	tune = tune,tuneIn = FALSE,dd = 2,niter = niter,
-	intervention = 0)
+	tune = tune,tuneIn = FALSE,dd = 2,niter = niter)
+
+
+HLSMcovplots(random.fit)
+
 
 plotLikelihood(random.fit)
-
 intercept = getIntercept(random.fit)
 dim(intercept) ##is an array of dimension niter by 15
 plotDiagnostic(intercept[,1])

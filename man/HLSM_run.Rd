@@ -21,11 +21,11 @@
 
 HLSMrandomEF(Y,edgeCov=NULL, receiverCov = NULL, senderCov = NULL, 
         FullX = NULL,initialVals = NULL, priors = NULL, tune = NULL,
-        tuneIn = TRUE,TT = NULL,dd, niter,intervention)
+        tuneIn = TRUE,TT = NULL,dd, niter)
 
 HLSMfixedEF(Y,edgeCov=NULL, receiverCov = NULL, senderCov = NULL,
         FullX = NULL, initialVals = NULL, priors = NULL, tune = NULL,
-        tuneIn = TRUE, TT = NULL,dd, niter,intervention)
+        tuneIn = TRUE, TT = NULL,dd, niter)
 
 getBeta(object, burnin = 0, thin = 1)
 getIntercept(object, burnin = 0, thin = 1)
@@ -40,7 +40,7 @@ getLikelihood(object, burnin = 0, thin = 1)
 \item{Y}{
 	input outcome for different networks. Y can either be
 
-        (i). list of socio-matrix for \code{K} different networks
+        (i). list of socio-matrixs for \code{K} different networks (Y[[i]] must be a matrix with named rows and columns)
 
         (ii). list of data frame with columns \code{Sender}, \code{Receiver} and \code{Outcome} for \code{K} different networks
 
@@ -147,9 +147,6 @@ getLikelihood(object, burnin = 0, thin = 1)
     number of iterations for the MCMC chain.
 }
 
-\item{intervention}{
-    binary variable indicating whether the posterior distribution of the intervention effect is to be estimated.
-}
 
 \item{object}{
 	object of class 'HLSM' returned by \code{HLSM()} or \code{HLSMfixedEF()}
@@ -161,7 +158,7 @@ getLikelihood(object, burnin = 0, thin = 1)
 
 \item{thin}{
 	numeric value by which the chain is to be thinned while extracting results from the 'HLSM' object. Default is \code{thin = 1}. 
-} 
+}
 }
 
 
@@ -196,6 +193,7 @@ getLikelihood(object, burnin = 0, thin = 1)
 \examples{
 
 library(HLSM)
+
 #Set values for the inputs of the function
 priors = NULL
 tune = NULL
@@ -203,29 +201,27 @@ initialVals = NULL
 niter = 10
 
 #Random effect HLSM on Pitt and Spillane data
-random.fit <- HLSMrandomEF(Y = ps.advice.mat,FullX = ps.edge.vars.mat,
+random.fit = HLSMrandomEF(Y = ps.advice.mat,FullX = ps.edge.vars.mat,
 	initialVals = initialVals,priors = priors,
-	tune = tune,tuneIn = FALSE,dd = 2,niter = niter,
-	intervention = 0)
+	tune = tune,tuneIn = FALSE,dd = 2,niter = niter)
 
 
 summary(random.fit)
 names(random.fit)
 
 #extract results without burning and thinning
-Beta <- getBeta(random.fit)
-Intercept <- getIntercept(random.fit)
-LS <- getLS(random.fit)
-Likelihood <- getLikelihood(random.fit)
+Beta = getBeta(random.fit)
+Intercept = getIntercept(random.fit)
+LS = getLS(random.fit)
+Likelihood = getLikelihood(random.fit)
 
 ##Same can be done for fixed effect model
 
 #Fixed effect HLSM on Pitt and Spillane data 
 
-fixed.fit <- HLSMfixedEF(Y = ps.advice.mat,FullX = ps.edge.vars.mat,
+fixed.fit = HLSMfixedEF(Y = ps.advice.mat,FullX = ps.edge.vars.mat,
 	initialVals = initialVals,priors = priors,
-	tune = tune,tuneIn = FALSE,dd = 2,niter = niter,
-	intervention = 0)
+	tune = tune,tuneIn = FALSE,dd = 2,niter = niter)
 
 summary(fixed.fit)
 names(fixed.fit)

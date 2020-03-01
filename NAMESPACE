@@ -1,9 +1,13 @@
 useDynLib(HLSM,.registration=TRUE)
 import("MASS", "coda", "igraph")
-importFrom("grDevices", "dev.new", "dev.off", "pdf")
+importFrom("grDevices", "dev.new", "dev.off", "pdf", "palette")
 importFrom("graphics", "layout", "par", "plot", "rect", "segments",
-             "text")
-importFrom("stats", "cmdscale", "quantile", "rnorm", "sd", "acf", "aggregate", "setNames")
+             "text", "matplot")
+importFrom("methods", "is")
+importFrom("abind", "abind")
+importFrom("stats", "cmdscale", "quantile", "rnorm", "sd", "acf", "aggregate", "as.ts", "getCall", "setNames")
+
+
 
 export( "HLSMrandomEF",
         "HLSMfixedEF",
@@ -17,11 +21,13 @@ export( "HLSMrandomEF",
 	"getAlpha",
 	"getLS",
 	"getLikelihood",
-        "HLSMDiag",
+        "HLSMfixed.covplots",
+        "HLSMrandom.covplots",
+        "HLSMdiag",
         "HLSMcovplots"
-        
 )
        
 
 S3method('print','HLSM')
+S3method('print','HLSMdiag')
 S3method('summary','HLSM')

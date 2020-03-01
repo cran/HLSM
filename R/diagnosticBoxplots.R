@@ -1,26 +1,26 @@
 # Function for plotting the diagnostic plots which auto detects the type of HLSM object and plots accordingly
 
-HLSMcovplots<-function(model,burnin=0,thin=1)
+HLSMcovplots<-function(fitted.model,burnin=0,thin=1)
 {
-  model=list(model)
-  length(model)
-  if(model[[1]]$call[[1]]=="HLSMfixedEF"){
-    HLSMfixedboxplots(model[[1]],burnin=burnin,thin=thin)
+  fitted.model=list(fitted.model)
+  length(fitted.model)
+  if(fitted.model[[1]]$call[[1]]=="HLSMfixedEF"){
+    HLSMfixed.covplots(m=fitted.model[[1]],burninvalue=burnin,thinvalue=thin)
     
-  }else if(model[[1]]$call[[1]]=="HLSMrandomEF"){
-   HLSMrandomboxplots(model[[1]],burnin=burnin,thin=thin)
+  }else if(fitted.model[[1]]$call[[1]]=="HLSMrandomEF"){
+   HLSMrandom.covplots(m=fitted.model[[1]],burninvalue=burnin,thinvalue=thin)
   }
 }
 
 # Function that plots the diagnostic boxplots for fixed effects model
-HLSMfixedboxplots<-function(model,burnin=burnin,thin=thin){
-  if(length(model$draws$ZZ)<=4000){
-    t=paste("Looks like your chain length is less than the minimum required value length of 3746, try running a chain length greater than 4000 to see the boxplots")
+HLSMfixed.covplots<-function(m,burninvalue,thinvalue){
+  if(length(m$draws$ZZ)<=4000){
+    t=paste("Try running a chain length greater than 4000 to see parameter plots")
     return(t)
   }
   else{
-  i=getIntercept(model,burnin = burnin,thin = thin)
-  betas=getBeta(model,burnin = burnin,thin = thin)
+  i=getIntercept(m,burnin = burninvalue,thin = thinvalue)
+  betas=getBeta(m,burnin = burninvalue,thin = thinvalue)
   beta_table=as.data.frame(betas)
   beta_mcmc=as.mcmc(beta_table)
   intercept_mcmc=as.mcmc(i)
@@ -32,23 +32,23 @@ HLSMfixedboxplots<-function(model,burnin=burnin,thin=thin){
   burnin_value =rdf[which.max(rdf[,2]),1]
   thinnin_value=rdf[which.max(rdf[,2]),4]
   #plotting the boxplots 
-  g= plotHLSM.fixed.fit(model,parameter="Beta",burnin=burnin_value,thin=thinnin_value)
+  g= plotHLSM.fixed.fit(m,parameter="Beta",burnin=burnin_value,thin=thinnin_value)
   return (c(g))
   }
 }
 
 # Function that plots the diagnostic bocplots for random effects model
-HLSMrandomboxplots<-function(model,burnin=burnin,thin=thin){
-  if(length(model$draws$ZZ)<=4000){
-    t=paste("Looks like your chain length is less than the minimum required value length of 3746, try running a chain length greater than 4000 to see the boxplots")
+HLSMrandom.covplots<-function(m,burninvalue,thinvalue){
+  if(length(m$draws$ZZ)<=4000){
+    t=paste("Try running a chain length greater than 4000 to see the parameter plots")
     return(t)
   }
   else{
-  intercept=getIntercept(model,burnin=burnin,thin=thin)
+  intercept=getIntercept(m,burnin=burninvalue,thin=thinvalue)
   beta_list <- list()
   for(i in 1:ncol(intercept))
   {
-    beta_list[[i]]=model$draws$Beta[,,i]
+    beta_list[[i]]=m$draws$Beta[,,i]
   }
   
   beta_list_df=do.call(cbind.data.frame, beta_list)
@@ -60,7 +60,7 @@ HLSMrandomboxplots<-function(model,burnin=burnin,thin=thin){
   burnin_value =rdf[which.max(rdf[,2]),1]
   thinnin_value=rdf[which.max(rdf[,2]),4]
   #plotting the boxplots 
-  g= plotHLSM.random.fit(model,parameter="Beta",burnin=burnin_value,thin=thinnin_value)
+  g= plotHLSM.random.fit(m,parameter="Beta",burnin=burnin_value,thin=thinnin_value)
   return (c(g))
   }
 }

@@ -94,7 +94,7 @@ plotHLSM.fixed.fit=function(fitted.model, parameter, burnin =0, thin = 1){
 		chain=getBeta(fitted.model,burnin=burnin,thin=thin)
                 if(is.null(dim(chain))==TRUE){p=1
 		}else {p=dim(chain)[2]}
-                x=c(1:p)
+                x=paste0('X', 1:p)
 		int.quantiles=matrix(NA, p,5)
 		if(p>1){
 			for(kappa in 1:p){
