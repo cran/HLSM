@@ -58,3 +58,9 @@ poor.acceptance=function(vector, dim){
     else{which(vector<0.30 | vector>0.55)}
 }
 
+
+which.suck=function(vectors, dim){
+ if(dim>1){which(vectors<0.10 | vectors>0.4)
+	}else{which(vectors<0.30 | vectors>0.55)}
+
+}

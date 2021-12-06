@@ -12,8 +12,13 @@ get_HLSM_type <- function(object_list) {
   type <- unique(gsub('HLSM(.*)EF', '\\1', funcs))
   if (length(type) > 1) {
     stop("HLSM list must be all of the same type.")
-  } else if (!(type %in% c('fixed', 'random'))) {
+  } else if (!(type %in% c('fixed', 'random', 'LSM'))) {
     stop("Unknown HLSM type found in object.")
+  }
+  if(type=="LSM"){
+  	test=deparse(calls[[1]]) #creates string of the call
+  	est.int=grep("estimate.intercept = TRUE", test)
+  	if(length(est.int)>0){type="LSM.estInt"}else{type="LSM.fixedInt"}
   }
   return(type)
 }
@@ -23,6 +28,17 @@ get_HLSM_type <- function(object_list) {
 
 extract_param <- function(chain, type, burnin = 0, thin = 1) {
   # in random, niter X nnet matrix
+  
+  if(type=="LSM.fixedInt"){
+  	 beta_draws <- getBeta(chain, burnin = burnin, thin = thin)
+  
+  # Creating shape and dimnames to pass to array creation, with goal of
+  # binding intercept to beta array along the "variable" axis.
+  beta_shape <- dim(beta_draws)
+  beta_dnames <- list(
+    iterations = seq_len(beta_shape[1]),
+    variables = paste0('X', seq_len(beta_shape[2]))
+  )}else{
   inter_draws <- getIntercept(chain, burnin = burnin, thin = thin)
   # in random, niter X nvar X nnet matrix
   beta_draws <- getBeta(chain, burnin = burnin, thin = thin)
@@ -39,22 +55,25 @@ extract_param <- function(chain, type, burnin = 0, thin = 1) {
   inter_dnames <- list(
     iterations = seq_len(inter_shape[1]),
     variables = 'Intercept'
-  )
+  )}
   
   # If model is not random effects, it is fixed across network
   if (type == "random") {
     beta_dnames$network <- paste0('Net', seq_len(beta_shape[3]))
     inter_dnames$network <- paste0('Net', seq_len(inter_shape[3]))
-  } else if (type != "fixed") {
-    stop("Type must be either 'fixed' or 'random'")
+  } else if (type != "fixed" && type != "LSM.estInt" && type !="LSM.fixedInt") {
+    stop("Type must be either 'LSM', 'fixed', or 'random'")
   }
   
   # Apply dnames and new variable dimension to intercept array, then bind along
   # the variable dimension.
   beta_array <- array(beta_draws, dim = beta_shape, dimnames = beta_dnames)
+  if(type=="LSM.fixedInt"){
+  	param_array=beta_array
+  }else{
   inter_array <- array(inter_draws, dim = inter_shape, dimnames = inter_dnames)
   param_array <- abind(inter_array, beta_array, along = 2)
-  
+  }
   return(param_array)
 }
 
@@ -134,7 +153,7 @@ raftery_summary <- function(results) {
 # Plotting Functions ------------------------------------------------------
 
 plot_shape <- function(param_mcmc, type) {
-  if (type == "fixed") {
+  if (type == "fixed" | type == "LSM.fixedInt" | type == "LSM.estInt") {
     n_vars <- length(varnames(param_mcmc))
     nrows <- min(4, n_vars)
     ncols <- 1
@@ -159,7 +178,7 @@ plot_shape <- function(param_mcmc, type) {
     netdex <- floor(seq(1, n_unets, length.out = ncols))
     dex_mat <- big_dex_mat[netdex,]
     plotdex <- as.vector(dex_mat)
-  } else {
+  }else{
     stop("Type must be either 'fixed' or 'random'.")
   }
   
@@ -208,6 +227,9 @@ HLSMdiag <- function(object, burnin = 0,
   diags <- match.arg(diags, several.ok = TRUE)
   
   type <- get_HLSM_type(object_list)
+  
+  # Need to  extract different information for LSM fits#
+  
   param <- lapply(object_list, extract_param, type = type, burnin = burnin)
   param_mcmc_list <- as.mcmc.list(lapply(param, param_to_mcmc))
   

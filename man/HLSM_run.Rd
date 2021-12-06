@@ -1,35 +1,38 @@
 \name{HLSMrandomEF}
 \alias{HLSMrandomEF}
 \alias{HLSMfixedEF}
+\alias{LSM}
 \alias{print.HLSM}
 \alias{print.summary.HLSM}
 \alias{summary.HLSM}
 \alias{getIntercept}
-\alias{getAlpha}
 \alias{getLS}
 \alias{getLikelihood}
 \alias{getBeta}
 
-\title{Function to run the MCMC sampler in random effects model (and HLSMfixedEF for fixed effects model)
+\title{Function to run the MCMC sampler in random effects latent space model, HLSMfixedEF for fixed effects model, or LSM for single network latent space model)
 }
 
 \description{
-    Function to run the MCMC sampler to draw from the posterior distribution of intercept, slopes, latent positions, and intervention effect (if applicable). HLSMrandomEF( ) fits random effects model; HLSMfixedEF( ) fits fixed effects model. 
+    Function to run the MCMC sampler to draw from the posterior distribution of intercept, slopes, and latent positions. HLSMrandomEF( ) fits random effects model; HLSMfixedEF( ) fits fixed effects model; LSM( ) fits single network model. 
 }
 
 \usage{
 
 HLSMrandomEF(Y,edgeCov=NULL, receiverCov = NULL, senderCov = NULL, 
         FullX = NULL,initialVals = NULL, priors = NULL, tune = NULL,
-        tuneIn = TRUE,TT = NULL,dd, niter)
+        tuneIn = TRUE,dd=2, niter)
 
 HLSMfixedEF(Y,edgeCov=NULL, receiverCov = NULL, senderCov = NULL,
         FullX = NULL, initialVals = NULL, priors = NULL, tune = NULL,
-        tuneIn = TRUE, TT = NULL,dd, niter)
+        tuneIn = TRUE,dd=2, niter)
+        
+LSM(Y,edgeCov=NULL, receiverCov = NULL, senderCov = NULL, 
+        FullX = NULL,initialVals = NULL, priors = NULL, tune = NULL,
+        tuneIn = TRUE,dd=2, estimate.intercept=FALSE, niter)
 
 getBeta(object, burnin = 0, thin = 1)
 getIntercept(object, burnin = 0, thin = 1)
-getAlpha(object, burnin = 0, thin = 1)
 getLS(object, burnin  = 0, thin = 1)
 getLikelihood(object, burnin = 0, thin = 1)
 }
@@ -40,7 +43,7 @@ getLikelihood(object, burnin = 0, thin = 1)
 \item{Y}{
 	input outcome for different networks. Y can either be
 
-        (i). list of socio-matrixs for \code{K} different networks (Y[[i]] must be a matrix with named rows and columns)
+        (i). list of sociomatrices for \code{K} different networks (Y[[i]] must be a matrix with named rows and columns)
 
         (ii). list of data frame with columns \code{Sender}, \code{Receiver} and \code{Outcome} for \code{K} different networks
 
@@ -93,7 +96,6 @@ getLikelihood(object, burnin = 0, thin = 1)
 
 	\code{ZZ} is an array of dimension \code{NN} by \code{dd}, where \code{NN} is the sum of nodes in all \code{K} networks.
 
-	\code{alpha} is a numeric variable and is 0 for no-intervention model.	
 }
 
 
@@ -103,15 +105,11 @@ getLikelihood(object, burnin = 0, thin = 1)
 
     \code{priors=}
 
-	\code{list(MuBeta,VarBeta,MuAlpha,VarAlpha,MuZ,VarZ,PriorA,PriorB)}
+	\code{list(MuBeta,VarBeta,MuZ,VarZ,PriorA,PriorB)}
        
 	\code{MuBeta} is a numeric vector of length PP + 1 specifying the mean of prior distribution for coefficients and intercept
 
 	\code{VarBeta} is a numeric vector for the variance of the prior distribution of coefficients and intercept. Its length is same as that of MuBeta.
-
-     \code{MuAlpha} is a numeric variable specifying the mean of prior distribution of intervention effect. Default is 0.
-
-    \code{VarAlpha} is a numeric variable for the variance of the prior distribution of intervention effect. Default is 100.
 
     \code{MuZ} is a numeric vector of length same as the dimension of the latent space, specifying the prior mean of the latent positions.
  
@@ -124,9 +122,9 @@ getLikelihood(object, burnin = 0, thin = 1)
 \item{tune}{
     an optional list of tuning parameters for tuning the chain. If tune = \code{NULL}, default tuning is done. Else, 
 
-	\code{tune = list(tuneAlpha, tuneBeta, tuneInt,tuneZ)}.
+	\code{tune = list(tuneBeta, tuneInt,tuneZ)}.
 
-	\code{tuneAlpha}, \code{tuneBeta} and \code{tuneInt} have the same structure as \code{beta}, \code{alpha} and \code{intercept} in \code{initialVals}.
+	\code{tuneBeta} and \code{tuneInt} have the same structure as \code{beta} and \code{intercept} in \code{initialVals}.
 
 	 \code{ZZ} is a vector of length \code{NN}.
 }
@@ -134,15 +132,16 @@ getLikelihood(object, burnin = 0, thin = 1)
     a logical to indicate whether tuning is needed in the MCMC sampling. Default is \code{FALSE}.
 }
 
-\item{TT}{
-     a vector of binaries to indicate treatment and control networks. If there is no intervention effect, TT = \code{NULL} (default).
-}
-
 
 \item{dd}{
     dimension of latent space.
 }
 
+\item{estimate.intercept}{
+
+  When TRUE, the intercept will be estimated. If the variance of the latent positions are of interest, intercept=FALSE will allow users to obtain a unique variance. The intercept can also be inputed by the user. 
+  }
+  
 \item{niter}{
     number of iterations for the MCMC chain.
 }
@@ -160,8 +159,6 @@ getLikelihood(object, burnin = 0, thin = 1)
 	numeric value by which the chain is to be thinned while extracting results from the 'HLSM' object. Default is \code{thin = 1}. 
 }
 }
-
-
 
 
 \value{
@@ -182,11 +179,16 @@ getLikelihood(object, burnin = 0, thin = 1)
 
 }
 
-\author{
-    Sam Adhikari
+\details{
+The \code{HLSMfixedEF} and \code{HLSMrandomEF} functions will not automatically assess thinning and burn-in. To ensure appropriate inference, see \code{HLSMdiag}. 
+See also \code{LSM} for fitting network data from a single network.
 }
 
-\references{Tracy M. Sweet, Andrew C. Thomas and Brian W. Junker (2012), "Hierarchical Network Models for Education Research: Hierarchical Latent Space Models", Journal of Educational and Behavorial Statistics.
+\author{
+    Sam Adhikari & Tracy Sweet
+}
+
+\references{Tracy M. Sweet, Andrew C. Thomas and Brian W. Junker (2013), "Hierarchical Network Models for Education Research: Hierarchical Latent Space Models", Journal of Educational and Behavorial Statistics.
 }
 
 
@@ -200,31 +202,17 @@ tune = NULL
 initialVals = NULL
 niter = 10
 
-#Random effect HLSM on Pitt and Spillane data
-random.fit = HLSMrandomEF(Y = ps.advice.mat,FullX = ps.edge.vars.mat,
-	initialVals = initialVals,priors = priors,
-	tune = tune,tuneIn = FALSE,dd = 2,niter = niter)
-
-
-summary(random.fit)
-names(random.fit)
-
-#extract results without burning and thinning
-Beta = getBeta(random.fit)
-Intercept = getIntercept(random.fit)
-LS = getLS(random.fit)
-Likelihood = getLikelihood(random.fit)
-
-##Same can be done for fixed effect model
-
 #Fixed effect HLSM on Pitt and Spillane data 
 
-fixed.fit = HLSMfixedEF(Y = ps.advice.mat,FullX = ps.edge.vars.mat,
+fixed.fit = HLSMfixedEF(Y = ps.advice.mat, senderCov=ps.node.df,
 	initialVals = initialVals,priors = priors,
 	tune = tune,tuneIn = FALSE,dd = 2,niter = niter)
-
 summary(fixed.fit)
-names(fixed.fit)
+
+
+lsm.fit = LSM(Y=School9Network,edgeCov=School9EdgeCov, 
+senderCov=School9NodeCov, receiverCov=School9NodeCov, niter = niter)
+names(lsm.fit)
 
 }
 

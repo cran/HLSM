@@ -12,7 +12,8 @@ getBeta = function(object, burnin = 0, thin = 1){
 
 getIntercept = function(object, burnin = 0, thin = 1){
 	xx = object$draws$Intercept
-	if(class(xx)[1] == 'matrix'){  ##for fixed effect model
+	if(class(xx)[1]=="NULL"){return(xx)}
+	else if(class(xx)[1] == 'matrix'){  ##for fixed effect model
 		nn = dim(xx)[[1]]
 		dd = seq((burnin+1), nn, thin)
 		return(xx[dd,]) 
@@ -23,14 +24,6 @@ getIntercept = function(object, burnin = 0, thin = 1){
 	}
 }
 
-getAlpha = function(object, burnin = 0, thin = 1){
-	if(all(!is.na(object$draws$Alpha))){
-	xx = object$draws$Alpha
-	nn = length(xx)
-	dd = seq((burnin+1), nn, thin)
-	return(xx[dd]) 
-	}else(return(NULL))
-}
 
 getLS = function(object, burnin = 0, thin = 1){
 	xx = object$draws$ZZ

@@ -1,3 +1,4 @@
+
 ####Function to run the sampler#####
 ##SPECIFYING PRIORS######
 #########################
@@ -16,46 +17,28 @@
        ##tuneZ =  list( vec(len = nn[x]])) length of list = KK
 ##############################################################          
 #library(MASS)
-HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
-                      FullX = NULL, initialVals = NULL, priors = NULL, tune = NULL,
-        tuneIn = TRUE,dd=2, niter)
+LSM= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
+     FullX = NULL, initialVals = NULL, priors = NULL, tune = NULL,
+        tuneIn = TRUE,dd=2,estimate.intercept=FALSE, niter)
 {
 
+    ## Y should be matrix or a dataframe
   #X and Y are provided as list. 
-    if(class(Y) != 'list'){
-	if(dim(Y)[2] != 4){stop('Invalid data structure type')} }
-	
-    if(class(Y) == 'list'){ 
-        KK = length(Y)
-	if(dim(Y[[1]])[1] == dim(Y[[1]])[2]){
+    if(class(Y)[1] == 'matrix'){
+        KK = 1
+	if(dim(Y)[1] == dim(Y)[2]){
+            Y=list(Y)
             nn =sapply(1:length(Y),function(x) nrow(Y[[x]]))
             nodenames=lapply(1:length(Y), function(x) rownames(Y[[x]]))
-        if(sum(sapply(nodenames, is.null))>=1){nodenames=lapply(1:length(Y), function(x) 1:dim(Y[[x]])[1])}}
+            if(sum(sapply(nodenames, is.null))>=1){nodenames=lapply(1:length(Y), function(x) 1:dim(Y[[x]])[1])}}else{stop('Y must be a nxn matrix or dataframe')}}
 
-	if(dim(Y[[1]])[1] != dim(Y[[1]])[2] & dim(Y[[1]])[2] == 4){
-		nn = sapply(1:length(Y), function(x)length(unique(c(Y[[x]]$Receiver,Y[[x]]$Sender))))
-		nodenames = lapply(1:length(Y), function(x) unique(c(Y[[x]]$Receiver,Y[[x]]$Sender)))
+    if(class(Y) =='dataframe'){ 
+	if(dim(Y)[1] != dim(Y)[2] & dim(Y)[2] == 3){
+            nn = length(unique(c(Y$Receiver,Y$Sender)))
+            Y$id=rep(1, nn)
+            Y=list(Y)
+	nodenames = list(unique(c(Y$Receiver,Y$Sender)))
 	}	}
-
-    if(class(Y) != 'list'){
-	if(dim(Y)[2] == 4){
-		nid = unique(Y$id)
-		KK = length(nid)
-		nn = rep(0,KK)
-		df.list = list()
-		nodenames = list()
-		for(k in 1:KK){
-			df.sm = Y[which(Y$id == nid[k],),]
-			nn[k] = length(unique(c(df.sm$Receiver,df.sm$Sender)))
-			nodenames[[k]] = unique(c(df.sm$Receiver, df.sm$Sender))
-			df.list[[k]] = array(0, dim = c(nn[k],nn[k]))
-			dimnames(df.list[[k]])[[1]] = dimnames(df.list[[k]])[[2]] = nodenames[[k]]
-			for(i in 1:dim(df.sm)[1]){
-				df.list[[k]][paste(df.sm$Sender[i]),paste(df.sm$Receiver[i])] = df.sm$Outcome[i]  #assume undirected graph and missing items are zeros
-			}
-		}
-		Y = df.list 
-	}}
 
 
 ##prepare covariates#####
@@ -70,21 +53,27 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
 
 	if(is.null(FullX)){
 	if(!is.null(edgeCov) | !is.null(senderCov)| !is.null(receiverCov)){
-	  if(!is.null(edgeCov)){
+            if(!is.null(edgeCov)){
 		if(class(edgeCov) != 'data.frame'){
-			stop('edgeCov must be of class data.frame')}
+                    stop('edgeCov must be of class data.frame')}
+                temp.n=dim(edgeCov)[1]
+                edgeCov$id=rep(1, temp.n)
 		X1 = getEdgeCov(edgeCov, nn,nodenames)
 }else(X1 =NULL)
   	  if(!is.null(senderCov)){
 		if(class(senderCov) != 'data.frame'){
-			stop('senderCov must be of class data.frame')}
+                    stop('senderCov must be of class data.frame')}
+                temp.n=dim(senderCov)[1]
+                senderCov$id=rep(1, temp.n)
 		X2 = getSenderCov(senderCov, nn,nodenames)
 }else(X2 = NULL)
 
 
 	  if(!is.null(receiverCov)){
 		if(class(receiverCov) != 'data.frame'){
-			stop('receiverCov must be of class data.frame')}
+                    stop('receiverCov must be of class data.frame')}
+                temp.n=dim(receiverCov)[1]
+                receiverCov$id=rep(1, temp.n)
 		X3 = getReceiverCov(receiverCov, nn,nodenames)
 }else(X3 = NULL)	
 
@@ -120,14 +109,14 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
 }
 	if(!is.null(FullX)) X = FullX
 
-
+if(class(X)=="array"){X=list(X)}
 #    nn = sapply(1:length(X),function(x) nrow(X[[x]]))
 #    KK = length(X)
     PP = dim(X[[1]])[3]
     XX = unlist(X)
     YY = unlist(Y)
-    YY[which(is.na(YY))] = 0
-    XX[which(is.na(XX))] = 0
+    YY[which(is.na(YY))] = 0  ## Note that missing data is imputed to be 0
+    XX[which(is.na(XX))] = 0 ## Note thatmissing data is imputed to be 0
     #Priors
 
     if(is.null(priors)){
@@ -160,29 +149,25 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
         return(Z0)})	
     Z00 = lapply(1:KK,function(tt)C[[tt]]%*%Z0[[tt]])
     
+
     
     
      if(is.null(initialVals)){
-# 	Z0 = list()
-#         for(i in 1:KK){  
-#             ZZ = t(replicate(nn[i],rnorm(dd,0,1)))
-#             ZZ[1,]=c(1,0)
-#             ZZ[2,2]=0
-#             if(ZZ[2,1] < ZZ[1,1]){
-#                 ZZ[2,1] = -1*(ZZ[2,1]-ZZ[1,1])+1}
-#             ZZ[3,2] = abs(ZZ[3,2])
-# 	    Z0[[i]] = ZZ		 
-#     }
         Z0 = unlist(Z00)
-        beta0 = rnorm(PP,0,1)
-        intercept0  = rnorm(1, 0,1)
+         beta0 = rnorm(PP,0,1)
+         if(estimate.intercept==FALSE){
+                 intercept0=round(log(nn)/2)}
+         else if(class(estimate.intercept)!="logical"){intercept0=estimate.intercept}
+         else{intercept0 = rnorm(1, 0, 1)}
+             
+         
         print("Starting Values Set")
     }else{
 	if(class(initialVals) != 'list')(stop("initialVals must be of class list, if not NULL"))
 	Z0 = initialVals$ZZ
 	beta0 = initialVals$beta
 	intercept0 = initialVals$intercept
-    }
+	}
 
 ###tuning parameters#####
     if(is.null(tune)){
@@ -194,11 +179,15 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
          	if(class(tune) != 'list')(stop("tune must be of class list, if not NULL"))
                  a.number = 1
                  tuneBeta = tune$tuneBeta
-                 tuneInt = tune$tuneInt
+                 if(estimate.intercept==TRUE){tuneInt = tune$tuneInt}
                  tuneZ = tune$tuneZ
           }       
-  
-###Tuning the Sampler####
+
+    
+###Tuning and Running the Sampler####
+#### Estimating Intercept = TRUE!########
+
+if(estimate.intercept==TRUE){
     do.again = 1
     tuneX = 1
     if(tuneIn == TRUE){
@@ -223,8 +212,40 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
 }
 
     rslt = MCMCfixedEF(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
+		beta = beta0 ,intercept = intercept0, MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneInt = tuneInt, tuneZAll = unlist(tuneZ),niter = niter,PriorA = PriorA, PriorB = PriorB)
+}
+
+
+
+#### Estimating Intercept = FALSE!########
+
+if(estimate.intercept==FALSE | class(estimate.intercept)!='logical'){
+    do.again = 1
+    tuneX = 1
+    if(tuneIn == TRUE){
+    while(do.again ==1){
+        print('Tuning the Sampler')
+        for(counter in 1:a.number)
+{ 
+            rslt = MCMCfixedIntercept(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
 		beta = beta0 ,intercept = intercept0,
-		MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneInt = tuneInt,tuneZAll = unlist(tuneZ),niter = niter,PriorA = PriorA, PriorB = PriorB)
+		MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneInt = tuneInt,tuneZAll = unlist(tuneZ),niter = 200,PriorA = PriorA, PriorB = PriorB)
+     	    tuneZ = lapply(1:KK,function(x)adjust.my.tune(tuneZ[[x]], rslt$acc$Z[[x]], 2))
+            tuneBeta = adjust.my.tune(tuneBeta, rslt$acc$beta,1)
+            print(paste('TuneDone = ',tuneX))
+            tuneX = tuneX+1
+    }
+    extreme = lapply(1:KK,function(x)which.suck(rslt$acc$Z[[x]],2))
+    do.again = max(sapply(extreme, length)) > max(nn)
+
+}
+    print("Tuning is finished")  
+}
+
+    rslt = MCMCfixedIntercept(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
+		beta = beta0 ,intercept = intercept0, MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneInt = tuneInt, tuneZAll = unlist(tuneZ),niter = niter,PriorA = PriorA, PriorB = PriorB)
+}
+    
     
     ##Procrutes transformation on the final draws of the latent positions
     ##
@@ -240,14 +261,22 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
     
 
     rslt$call = match.call()
-    if(noCOV == TRUE){
+    if(noCOV == TRUE ){
 		rslt$tune = list(tuneZ = tuneZ, tuneInt = tuneInt)	
-		rslt$draws$Beta = NA}
+		rslt$draws$Beta = NA
+    }
 
     if(noCOV == FALSE){
-	    rslt$tune = list(tuneBeta = tuneBeta, tuneZ = tuneZ,tuneInt = tuneInt)}
+	    rslt$tune = list(tuneBeta = tuneBeta, tuneZ = tuneZ,tuneInt = tuneInt)
+	
+}
 	
     class(rslt) = 'HLSM'
     rslt
 }
+
+
+    
+
+
 

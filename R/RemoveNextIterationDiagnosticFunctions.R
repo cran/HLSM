@@ -3,7 +3,7 @@
 ## This function will be called from the main fixed effects diagnostic function and hence we do not need to use this function explicitly 
 
 HLSMfixedDiagnostics<-function(m,burninvalue=0,thinvalue=1,lag=500,type="0"){
-  
+  warning("This function is deprecated and will be removed in version 0.9.1")
   i=getIntercept(m,burnin = burninvalue,thin = thinvalue)
   
   betas=getBeta(m,burnin = burninvalue,thin = thinvalue)
@@ -33,7 +33,7 @@ HLSMfixedDiagnostics<-function(m,burninvalue=0,thinvalue=1,lag=500,type="0"){
 
 #### Fixed effects diagnostic function that calculates the optimal chain length, burnin and thinning value if only one fixed effects model is passed and can also compute the convergence if you pass two or more fixed effect objects
 HLSMFixedEffectsDiagnostics<-function(models=list(),bv=0,tv=1,lg=500,t="0"){
-  
+  warning("This function is deprecated and will be removed in version 0.9.1")
   l=length(models)
   
   if(l==1){
@@ -114,7 +114,7 @@ HLSMFixedEffectsDiagnostics<-function(models=list(),bv=0,tv=1,lg=500,t="0"){
 ## This function will be called from the main random effects diagnostic function and hence we do not need to use this function explicitly 
 
 HLSMrandomDiagnostics<-function(m,type="0",burninvalue=0,thinvalue=1,lag=0,varnum=1){
-  
+  warning("This function is deprecated and will be removed in version 0.9.1")
   intercept=getIntercept(m,burnin = burninvalue,thin = thinvalue)
   
   
@@ -155,7 +155,7 @@ HLSMrandomDiagnostics<-function(m,type="0",burninvalue=0,thinvalue=1,lag=0,varnu
 #### Random effects diagnostic function that calculates the optimal chain length, burnin and thinning value if only one random effects model is passed and can also compute the convergence if you pass two or more random effect objects
 
 HLSMrandomDiagnostics<-function(m,type="0",burninvalue=0,thinvalue=1,lag=0,varnum=1){
-  
+  warning("This function is deprecated and will be removed in version 0.9.1")
   intercept=getIntercept(m,burnin = burninvalue,thin = thinvalue)
   
   
@@ -198,7 +198,7 @@ HLSMrandomDiagnostics<-function(m,type="0",burninvalue=0,thinvalue=1,lag=0,varnu
 #### Random effects diagnostic function that calculates the optimal chain length, burnin and thinning value if only one random effects model is passed and can also compute the convergence if you pass two or more random effect objects
 
 HLSMrandomEffectsDiagnostics<-function(models=list(),bv=0,tv=1,lg=500,t="0"){
-  
+  warning("This function is deprecated and will be removed in version 0.9.1")
   l=length(models)
   
   if(l==1){

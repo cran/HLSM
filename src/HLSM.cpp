@@ -100,11 +100,7 @@ void LogpriorBeta(double *Beta, double *MuBeta, double *SigmaBeta, double *val)
     val[0] = dnorm(Beta[0], MuBeta[0], sigma, 1);
 }
 
-void LogpriorAlpha(double *Alpha, double *MuAlpha, double *SigmaAlpha, double *val)	 
-{
-	double sigma = sqrt(SigmaAlpha[0]);
-	val[0] = dnorm(Alpha[0],MuAlpha[0],sigma,1);
-}
+
 
 //Z is treated as independent normals in each coordinate
 void LogpriorZZ(double *ZZ, double *Mu, double *Var, int *dd, double *val){
@@ -118,7 +114,7 @@ void LogpriorZZ(double *ZZ, double *Mu, double *Var, int *dd, double *val){
 }
 
 //compute loglikelihood for a single network
-void FullLogLik(double *beta, double *YY, double *XX, double *ZZ, double *alpha, int *Tr, double *intercept,int *nn, int *pp, int *dd, double *Val){
+void FullLogLik(double *beta, double *YY, double *XX, double *ZZ, double *intercept,int *nn, int *pp, int *dd, double *Val){
 	double* dMat = 0;
 	dMat = new double[nn[0]*nn[0]];
 	distMat(nn,dd,ZZ,dMat);
@@ -133,8 +129,8 @@ void FullLogLik(double *beta, double *YY, double *XX, double *ZZ, double *alpha,
 				tmpVal1 = tmpVal1 + beta[kk]*XX[ii+jj*nn[0]+kk*nn[0]*nn[0]];
 				tmpVal2 = tmpVal2 + beta[kk]*XX[jj + ii*nn[0] + kk*nn[0]*nn[0]];
 			}
-			double vv1 = (intercept[0] + tmpVal1 + alpha[0]*Tr[0] - dMat[jj*nn[0] + ii]); 
-			double vv2 = (intercept[0] + tmpVal2 + alpha[0]*Tr[0] - dMat[jj+ii*nn[0]]);
+			double vv1 = (intercept[0] + tmpVal1  - dMat[jj*nn[0] + ii]);
+			double vv2 = (intercept[0] + tmpVal2  - dMat[jj+ii*nn[0]]);
 			tmp1 = logitInverse(vv1);
 			tmp2 = logitInverse(vv2);
 			if(YY[jj*nn[0] + ii] == 1){
@@ -154,7 +150,7 @@ void FullLogLik(double *beta, double *YY, double *XX, double *ZZ, double *alpha,
 }
 
 //sum of loglikelihoods for all KK networks
-void AllLogLik(double *X, double *Y, double *Z, int *T, int *nn, int *pp, int *dd, int *KK, double *beta, double *intercept,double *alpha, double *lliknew)
+void AllLogLik(double *X, double *Y, double *Z, int *nn, int *pp, int *dd, int *KK, double *beta, double *intercept, double *lliknew)
 {
 	double Val;
 //	int slen = KK[0]+1;
@@ -177,7 +173,7 @@ void AllLogLik(double *X, double *Y, double *Z, int *T, int *nn, int *pp, int *d
 		 readX(X,XMat,nn,pp[0],kk);
 		 getZ(Z,ZMat,nn,dd[0],kk);
 		 //use the X Y and Z for that group.
-	         FullLogLik(beta, YMat, XMat, ZMat, alpha, &T[kk], intercept,&nn[kk],pp,dd,&Val);
+	         FullLogLik(beta, YMat, XMat, ZMat, intercept,&nn[kk],pp,dd,&Val);
 		 lliknew[0] = lliknew[0] + Val;
 		 delete[] XMat;
 	 	 delete[] YMat;
@@ -189,7 +185,7 @@ void AllLogLik(double *X, double *Y, double *Z, int *T, int *nn, int *pp, int *d
 		
 
 //update Z as an independent normal
-void updateZ(double *XX,double *YY,double *ZZ,int *TT,int *nn, int *pp,int *dd,double *beta,double *intercept,double *alpha,double *zzPrior,double *Var,double *tuneZ,double *llOld,double *accZ)
+void updateZ(double *XX,double *YY,double *ZZ,int *nn, int *pp,int *dd, double  *beta, double *intercept, double *zzPrior,double *Var,double *tuneZ,double *llOld,double *accZ)
 {  
      double draw, logRR;
      double* Znew = 0;
@@ -228,7 +224,7 @@ void updateZ(double *XX,double *YY,double *ZZ,int *TT,int *nn, int *pp,int *dd,d
 //			  }		
 	      	      }
 	      WriteRow(Znew, (ii), ZnewSm,nn,dd);
-    	      FullLogLik(beta, YY, XX, Znew, alpha, TT, intercept,nn,pp,dd,&llNew);
+    	      FullLogLik(beta, YY, XX, Znew, intercept,nn,pp,dd,&llNew);
     	      LogpriorZZ(ZnewSm,zzPrior,Var,dd,&lpNew);
     	      logRR = llNew - llOld[0] + lpNew - lpOld;
     	      draw = runif(0.0,1.0);
@@ -249,7 +245,7 @@ void updateZ(double *XX,double *YY,double *ZZ,int *TT,int *nn, int *pp,int *dd,d
 
 //UPDATES FOR RANDOM EFFECT MODEL
 //update beta 
-void updateBetamulti(double *X,double *Y,double *Z,int *T,int *nn,int *pp,int *dd, double *beta, double *intercept,double *alpha, double *mu,double *sigmasq,double *tune,double *llik,double *acc)
+void updateBetamulti(double *X,double *Y,double *Z,int *nn,int *pp,int *dd, double *beta, double *intercept, double *mu,double *sigmasq,double *tune,double *llik,double *acc)
 {
 	double* betanew = 0;
 	betanew = new double[pp[0]];
@@ -264,7 +260,7 @@ void updateBetamulti(double *X,double *Y,double *Z,int *T,int *nn,int *pp,int *d
 		LogpriorBeta(&beta[ii], &mu[ii], &sigmasq[ii],&lpBeta); 
 		betanew[ii] = beta[ii] + tune[ii]*rnorm(0.0,1.0);
 		LogpriorBeta(&betanew[ii],&mu[ii],&sigmasq[ii],&lpBetanew);
-		FullLogLik(betanew, Y, X, Z, alpha, T, intercept,nn, pp, dd, &llikBetanew);
+		FullLogLik(betanew, Y, X, Z, intercept,nn, pp, dd, &llikBetanew);
 		double logratio = lpBetanew - lpBeta + llikBetanew - llik[0];
 		if(log(runif(0.0,1.0)) < logratio){
 			beta[ii] = betanew[ii];
@@ -279,13 +275,13 @@ void updateBetamulti(double *X,double *Y,double *Z,int *T,int *nn,int *pp,int *d
 }
 
 //update intercept
-void updateIntercept(double *X,double *Y,double *Z,int *T,int *nn,int *pp,int *dd,double *beta,double *intercept,double *alpha,double *mu,double *sigmasq,double *tuneInt,double *lpInt,double *llik,double *acc){
+void updateIntercept(double *X,double *Y,double *Z,int *nn,int *pp,int *dd,double *beta,double *intercept, double *mu,double *sigmasq,double *tuneInt,double *lpInt,double *llik,double *acc){
 	double intnew;
 	double lpIntNew;
 	double llikIntnew;
        	intnew = intercept[0] + tuneInt[0]*rnorm(0.0,1.0);
 	LogpriorBeta(&intnew, mu,sigmasq,&lpIntNew);
-	FullLogLik(beta,Y,X,Z,alpha,T,&intnew,nn,pp,dd,&llikIntnew);
+	FullLogLik(beta,Y,X,Z,&intnew,nn,pp,dd,&llikIntnew);
 	double logratio = lpIntNew-lpInt[0]+llikIntnew-llik[0];
 	if(log(runif(0.0,1.0)) < logratio){
 		intercept[0] = intnew;
@@ -298,7 +294,7 @@ void updateIntercept(double *X,double *Y,double *Z,int *T,int *nn,int *pp,int *d
 
 //UPDATES FOR FIXED EFFECT MODEL
 //update beta 
-void updateBetamultiFixedEF(double *X,double *Y,double *Z,int *T,int *nn,int *pp,int *dd, int *KK, double *beta, double *intercept,double *alpha, double *mu,double *sigmasq,double *tune,double *llik,double *acc)
+void updateBetamultiFixedEF(double *X,double *Y,double *Z,int *nn,int *pp,int *dd, int *KK, double *beta, double *intercept, double *mu,double *sigmasq,double *tune,double *llik,double *acc)
 {
 	double* betanew = 0;
 	betanew = new double[pp[0]];
@@ -313,7 +309,7 @@ void updateBetamultiFixedEF(double *X,double *Y,double *Z,int *T,int *nn,int *pp
 		LogpriorBeta(&beta[ii], &mu[ii], &sigmasq[ii],&lpBeta); 
 		betanew[ii] = beta[ii] + tune[ii]*rnorm(0.0,1.0);
 		LogpriorBeta(&betanew[ii],&mu[ii],&sigmasq[ii],&lpBetanew);
-        	AllLogLik(X, Y, Z, T, nn, pp, dd,KK, betanew, intercept,alpha, &llikBetanew);
+        	AllLogLik(X, Y, Z, nn, pp, dd,KK, betanew, intercept, &llikBetanew);
 		double logratio = lpBetanew - lpBeta + llikBetanew - llik[0];
 		if(log(runif(0.0,1.0)) < logratio){
 			beta[ii] = betanew[ii];
@@ -328,13 +324,13 @@ void updateBetamultiFixedEF(double *X,double *Y,double *Z,int *T,int *nn,int *pp
 }
 
 //update intercept
-void updateInterceptFixedEF(double *X,double *Y,double *Z,int *T,int *nn,int *pp,int *dd,int *KK, double *beta,double *intercept,double *alpha,double *mu,double *sigmasq,double *tuneInt,double *lpInt,double *llik,double *acc){
+void updateInterceptFixedEF(double *X,double *Y,double *Z,int *nn,int *pp,int *dd,int *KK, double *beta,double *intercept,double *mu,double *sigmasq,double *tuneInt,double *lpInt,double *llik,double *acc){
 	double intnew;
 	double lpIntnew;
 	double llikIntnew;
        	intnew = intercept[0] + tuneInt[0]*rnorm(0.0,1.0);
 	LogpriorBeta(&intnew, mu,sigmasq,&lpIntnew);
-	AllLogLik(X, Y, Z, T, nn, pp, dd,KK, beta, &intnew,alpha,&llikIntnew);
+	AllLogLik(X, Y, Z, nn, pp, dd,KK, beta, &intnew,&llikIntnew);
 	double logratio = lpIntnew-lpInt[0]+llikIntnew-llik[0];
 	if(log(runif(0.0,1.0)) < logratio){
 		intercept[0] = intnew;
@@ -348,27 +344,13 @@ void updateInterceptFixedEF(double *X,double *Y,double *Z,int *T,int *nn,int *pp
 
 /////
 //update alpha
-void updateAlpha(double *X,double *Y,double *Z,int *T,int *nn,int *pp,int *dd,int *KK,double *beta, double *intercept,double *alpha,double *mu,double *sigmasq,double *tuneAlpha,double *lpAlpha,double *llikAll,double *accalpha)
-{
-	 double Alphanew = alpha[0] + tuneAlpha[0]*rnorm(0.0,1.0);
-	 double llikAlphanew;
-	 double lpAlphanew;
-	 AllLogLik(X, Y, Z, T, nn, pp, dd,KK, beta, intercept,&Alphanew,&llikAlphanew);
-	 LogpriorAlpha(&Alphanew, mu, sigmasq,&lpAlphanew);
-	 double logratio = llikAlphanew - llikAll[0] + lpAlphanew -lpAlpha[0];
-	 if(log(runif(0.0,1.0)) < logratio){
-		 alpha[0] = Alphanew;
-		 lpAlpha[0] = lpAlphanew;
-		 accalpha[0] = accalpha[0] + 1;
-	 }
-}
 
 /////////////////////////////////
 
 //SAMPLER FOR FIXED EFFECT MODEL
 extern "C" {
 
-void sampleFixedIntervention(int *niter, double *XX,double *YY,double *ZZ,int *TT,int *nn,int *PP,int *dd,int *KK,double *beta,double *intercept,double *alpha,double *MuAlpha,double *SigmaAlpha,double *MuBeta, double *SigmaBeta, double *MuZ,double *VarZ, double *tuneBetaAll,double *tuneInt,double *tuneAlpha,double *tuneZAll,double *accBetaAll,double *accAlpha, double *accIntAll,double *accZAll, double *betaFinal, double *AlphaFinal, double *ZZFinal, double *InterceptFinal,double *Zvar1,double *Zvar2,double *likelihood,double *PriorA,double *PriorB, int *intervention){
+void sampleFixedIntervention(int *niter, double *XX,double *YY,double *ZZ,int *nn,int *PP,int *dd,int *KK,double *beta,double *intercept,double *MuBeta, double *SigmaBeta, double *MuZ,double *VarZ, double *tuneBetaAll,double *tuneInt,double *tuneZAll,double *accBetaAll, double *accIntAll,double *accZAll, double *betaFinal, double *ZZFinal, double *InterceptFinal,double *Zvar1,double *Zvar2,double *likelihood,double *PriorA,double *PriorB){
 	int slen = KK[0]+1;
 	double* sumn = 0; // need this to store the updated parameters
 	sumn = new double[slen];
@@ -379,7 +361,7 @@ void sampleFixedIntervention(int *niter, double *XX,double *YY,double *ZZ,int *T
 	int ll = KK[0];
 	int sumAll = sumn[ll];
 //	int lenY = sumn[KK[0]+1];
-	double lpAlpha,lpInt,llik;
+	double lpInt,llik;
 //	double lpZ, lpBeta;
         double* D = 0;
 	D = new double[dd[0]];	
@@ -390,7 +372,6 @@ void sampleFixedIntervention(int *niter, double *XX,double *YY,double *ZZ,int *T
 
 	for(int ii = 0; ii < niter[0]; ii++){
 		GetRNGstate();
-		LogpriorAlpha(alpha, MuAlpha, SigmaAlpha,&lpAlpha);
 		//Recursion for KK groups
 		double llikall = 0.0;
         	for(int ss = 0.0;ss < dd[0];ss++){
@@ -420,9 +401,9 @@ void sampleFixedIntervention(int *niter, double *XX,double *YY,double *ZZ,int *T
 			}
 			
        			//loglikelihood for the group
-	               	FullLogLik(beta, YMat, XMat, ZMat,alpha, &TT[kk],intercept, &nn[kk],PP,dd,&llik);
+	               	FullLogLik(beta, YMat, XMat, ZMat,intercept, &nn[kk],PP,dd,&llik);
 
-			updateZ(XMat,YMat,ZMat,&TT[kk],&nn[kk],PP,dd,beta,intercept,alpha,MuZ,VarZ,tuneZ,&llik,accZ);
+			updateZ(XMat,YMat,ZMat,&nn[kk],PP,dd,beta,intercept,MuZ,VarZ,tuneZ,&llik,accZ);
 		       //store
        	          	for(int nZ=0; nZ < nn[kk]; nZ++){
        				for(int dZ=0; dZ < dd[0]; dZ++){
@@ -444,8 +425,8 @@ void sampleFixedIntervention(int *niter, double *XX,double *YY,double *ZZ,int *T
 //	Rprintf("%f",llikall);
 
 		LogpriorBeta(intercept, &muInt, &sigmaInt,&lpInt); //logprior of intercept
-                updateInterceptFixedEF(XX,YY,ZZ,TT,nn,PP,dd,KK,beta,intercept,alpha,&muInt,&sigmaInt,tuneInt,&lpInt,&llikall, accIntAll);
-		updateBetamultiFixedEF(XX,YY,ZZ,TT,nn,PP,dd,KK, beta,intercept,alpha,MuBeta,SigmaBeta,tuneBetaAll,&llikall, accBetaAll);
+                updateInterceptFixedEF(XX,YY,ZZ,nn,PP,dd,KK,beta,intercept,&muInt,&sigmaInt,tuneInt,&lpInt,&llikall, accIntAll);
+		updateBetamultiFixedEF(XX,YY,ZZ,nn,PP,dd,KK, beta,intercept,MuBeta,SigmaBeta,tuneBetaAll,&llikall, accBetaAll);
 								        //store the updated values
 		InterceptFinal[ii] = intercept[0];    
        		for(int pp = 0; pp < PP[0]; pp++){
@@ -453,11 +434,6 @@ void sampleFixedIntervention(int *niter, double *XX,double *YY,double *ZZ,int *T
        			}
 			
 
-	//update alpha
-      	    if(intervention[0] == 1){
-	        	updateAlpha(XX,YY,ZZ,TT,nn,PP,dd,KK,beta,intercept,alpha,MuAlpha,SigmaAlpha,tuneAlpha,&lpAlpha,&llikall,accAlpha);
-		        AlphaFinal[ii] = alpha[0];
-	}
 
     //Update varaince for ZZ    
 /*	
@@ -480,9 +456,9 @@ void sampleFixedIntervention(int *niter, double *XX,double *YY,double *ZZ,int *T
 
 
 /////////////////////////////////////////////////////
-///////////////SAMLPE FOR RANDOM EFFECT MODEL////////
+///////////////SAMPLER FOR RANDOM EFFECT MODEL////////
 //////////////////////////////////////////////////////
-void sampleRandomIntervention(int *niter, double *XX,double *YY,double *ZZ,int *TT,int *nn,int *PP,int *dd,int *KK,double *beta,double *intercept,double *alpha,double *MuAlpha,double *SigmaAlpha,double *MuBeta, double *SigmaBeta, double *MuZ,double *VarZ, double *tuneBetaAll,double *tuneInt,double *tuneAlpha,double *tuneZAll,double *accBetaAll,double *accAlpha, double *accIntAll,double *accZAll, double *betaFinal, double *AlphaFinal, double *ZZFinal, double *InterceptFinal,double *Zvar1,double *Zvar2,double *postVar, double *postMu, double *likelihood,double *PriorA,double *PriorB, int *intervention){
+void sampleRandomIntervention(int *niter, double *XX,double *YY,double *ZZ,int *nn,int *PP,int *dd,int *KK,double *beta,double *intercept,double *MuBeta, double *SigmaBeta, double *MuZ,double *VarZ, double *tuneBetaAll,double *tuneInt,double *tuneZAll,double *accBetaAll, double *accIntAll,double *accZAll, double *betaFinal, double *ZZFinal, double *InterceptFinal,double *Zvar1,double *Zvar2,double *postVar, double *postMu, double *likelihood,double *PriorA,double *PriorB){
 	//Set starting points
 //	InitialVal(XX,YY,ZZ,nn,TT,dd,PP,KK,beta,intercept,alpha,intervention);
 	int slen = KK[0]+1;
@@ -495,7 +471,7 @@ void sampleRandomIntervention(int *niter, double *XX,double *YY,double *ZZ,int *
 	int ll = KK[0];
 	int sumAll = sumn[ll];
 //	int lenY = sumn[KK[0]+1];
-	double lpAlpha,lpInt,llik; 
+	double lpInt,llik;
 	//double lpZ, lpBeta;
         double* accbeta = 0;
         accbeta = new double[PP[0]];
@@ -510,7 +486,6 @@ void sampleRandomIntervention(int *niter, double *XX,double *YY,double *ZZ,int *
 		double muInt = MuBeta[PP[0]];
         	double sigmaInt = SigmaBeta[PP[0]];
 		GetRNGstate();
-		LogpriorAlpha(alpha, MuAlpha, SigmaAlpha,&lpAlpha);
 		//Recursion for KK groups
 		double llikall = 0.0;
         	for(int ss = 0.0;ss < dd[0];ss++){
@@ -554,11 +529,11 @@ void sampleRandomIntervention(int *niter, double *XX,double *YY,double *ZZ,int *
 			}
 			
        			//loglikelihood for the group
-	               	FullLogLik(betaKK, YMat, XMat, ZMat,alpha, &TT[kk], &intercept[kk],&nn[kk], PP, dd,&llik);
+	               	FullLogLik(betaKK, YMat, XMat, ZMat, &intercept[kk],&nn[kk], PP, dd,&llik);
 			LogpriorBeta(&intercept[kk], &muInt, &sigmaInt,&lpInt); //logprior of intercept
-			updateBetamulti(XMat,YMat,ZMat,&TT[kk],&nn[kk],PP,dd,betaKK,&intercept[kk],alpha,MuBeta,SigmaBeta,tuneBeta,&llik, accbeta);
-			updateZ(XMat,YMat,ZMat,&TT[kk],&nn[kk],PP,dd,betaKK,&intercept[kk],alpha,MuZ, VarZ,tuneZ,&llik,accZ);	
-			updateIntercept(XMat,YMat,ZMat,&TT[kk],&nn[kk],PP,dd,betaKK,&intercept[kk],alpha,&muInt,&sigmaInt,&tuneInt[kk],&lpInt,&llik, &accInt);
+			updateBetamulti(XMat,YMat,ZMat,&nn[kk],PP,dd,betaKK,&intercept[kk],MuBeta,SigmaBeta,tuneBeta,&llik, accbeta);
+			updateZ(XMat,YMat,ZMat,&nn[kk],PP,dd,betaKK,&intercept[kk],MuZ, VarZ,tuneZ,&llik,accZ);
+			updateIntercept(XMat,YMat,ZMat,&nn[kk],PP,dd,betaKK,&intercept[kk],&muInt,&sigmaInt,&tuneInt[kk],&lpInt,&llik, &accInt);
 				
 		        //store the updated values
 			InterceptFinal[ii+kk*niter[0]] = intercept[kk];    
@@ -588,11 +563,6 @@ void sampleRandomIntervention(int *niter, double *XX,double *YY,double *ZZ,int *
 		}
 	//update alpha
 //	Rprintf("%f",llikall);
-
-	if(intervention[0] == 1){
-		updateAlpha(XX,YY,ZZ,TT,nn,PP,dd,KK,beta,intercept,alpha,MuAlpha,SigmaAlpha,tuneAlpha,&lpAlpha,&llikall,accAlpha);
-		AlphaFinal[ii] = alpha[0];
-	}
 
 	//update mu and sigmasq for beta
 	for(int ee = 0;ee< PP[0];ee++){
@@ -657,5 +627,115 @@ void sampleRandomIntervention(int *niter, double *XX,double *YY,double *ZZ,int *
 		 }
 
 
-} 
+
+
+//////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+///
+/////////////////////////////////////////////////////////
+//SAMPLER FOR FIXED INTERCEPT (SINGLE NETWORK) MODEL
+//////////////////////////////////////////////////////
+///
+
+void sampleFixedIntercept(int *niter, double *XX,double *YY,double *ZZ,int *nn,int *PP,int *dd,int *KK,double *beta,double *intercept,double *MuBeta, double *SigmaBeta, double *MuZ,double *VarZ, double *tuneBetaAll,double *tuneZAll,double *accBetaAll,double *accZAll, double *betaFinal, double *ZZFinal,double *Zvar1,double *Zvar2,double *likelihood,double *PriorA,double *PriorB){
+    int slen = KK[0]+1;
+    double* sumn = 0; // need this to store the updated parameters
+    sumn = new double[slen];
+    sumn[0] = 0;
+    for(int iz =0; iz < KK[0]; iz++){
+        sumn[iz+1] = sumn[iz] + nn[iz];
+    }
+    int ll = KK[0];
+    int sumAll = sumn[ll];
+//    int lenY = sumn[KK[0]+1];
+    double llik;
+//    double lpZ, lpBeta;
+        double* D = 0;
+    D = new double[dd[0]];
+//    double D[dd[0]];
+//    double C;
+
+
+    for(int ii = 0; ii < niter[0]; ii++){
+        GetRNGstate();
+        //Recursion for KK groups
+        double llikall = 0.0;
+            for(int ss = 0.0;ss < dd[0];ss++){
+            D[ss] = 0.0;
+        }
+        for(int kk = 0; kk < KK[0]; kk++){
+            int ss = sumn[kk];
+        //    int ss2 = sumn[kk + 1];
+                double* accZ = 0;
+                           accZ = new double[nn[kk]];
+            double* tuneZ = 0;
+                           tuneZ = new double[nn[kk]];
+            double* XMat = 0;
+            XMat = new double[nn[kk]*nn[kk]*PP[0]];
+            double* YMat = 0;
+            YMat = new double[nn[kk]*nn[kk]];
+            double* ZMat = 0;
+            ZMat = new double[nn[kk]*dd[0]];
+            //read X, Y, X for a network
+                        getY(YY,YMat,nn,kk);
+            readX(XX,XMat,nn,PP[0],kk);
+            getZ(ZZ,ZMat,nn,dd[0],kk);
+        
+            for(int zz =0;zz < nn[kk];zz++){
+                accZ[zz] = accZAll[zz+ss];
+                tuneZ[zz] = tuneZAll[zz+ss];
+            }
+            
+                   //loglikelihood for the group
+                       FullLogLik(beta, YMat, XMat, ZMat,intercept, &nn[kk],PP,dd,&llik);
+
+            updateZ(XMat,YMat,ZMat,&nn[kk],PP,dd,beta,intercept,MuZ,VarZ,tuneZ,&llik,accZ);
+               //store
+                         for(int nZ=0; nZ < nn[kk]; nZ++){
+                       for(int dZ=0; dZ < dd[0]; dZ++){
+                    ZZ[nZ+dZ*nn[kk]+dd[0]*ss] = ZMat[nZ+dZ*nn[kk]];
+                       // ZZFinal[nZ+ss+ss2*dZ+ii*sumAll*dd[0]] = ZMat[nZ+dZ*nn[kk]];
+                    ZZFinal[nZ+dZ*nn[kk]+dd[0]*ss+ii*sumAll*dd[0]] = ZMat[nZ+dZ*nn[kk]];
+                    D[dZ] += square(ZMat[nZ+dZ*nn[kk]] - 0.0);
+                }
+                    accZAll[nZ+ss] = accZ[nZ];
+                       }
+            llikall += llik;
+            delete[] XMat;
+            delete[] YMat;
+            delete[] ZMat;
+            delete[] tuneZ;
+            delete[] accZ;
+        }
+        
+//    Rprintf("%f",llikall);
+
+                
+        updateBetamultiFixedEF(XX,YY,ZZ,nn,PP,dd,KK, beta,intercept,MuBeta,SigmaBeta,tuneBetaAll,&llikall, accBetaAll);
+                                        //store the updated values
+               for(int pp = 0; pp < PP[0]; pp++){
+                   betaFinal[ii+pp*niter[0]] = beta[pp];
+                   }
+            
+
+    //Update varaince for ZZ
+/*
+    for(int vv = 0; vv < dd[0]; vv++){
+        D[vv] = D[vv]/2.0 + PriorB[0];
+        C = PriorA[0] + (sumAll)/2.0;
+        VarZ[vv] = 1.0/rgamma(C,1.0/D[vv]);
+    }
+*/
+    Zvar1[ii] = VarZ[0];
+    Zvar2[ii] = VarZ[1];
+    likelihood[ii] = llikall;
+    PutRNGstate();
+    }
+         
+    delete[] sumn;
+    delete[] D;
+}
+
+}
 

@@ -6,12 +6,14 @@ Check these declarations against the C/Fortran source code.
 */
 
 /* .C calls */
-extern void sampleFixedIntervention(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
-extern void sampleRandomIntervention(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
+extern void sampleFixedIntervention(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
+extern void sampleRandomIntervention(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
+extern void sampleFixedIntercept(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
 
 static const R_CMethodDef CEntries[] = {
-  {"sampleFixedIntervention",  (DL_FUNC) &sampleFixedIntervention,  36},
-  {"sampleRandomIntervention", (DL_FUNC) &sampleRandomIntervention, 38},
+  {"sampleFixedIntervention",  (DL_FUNC) &sampleFixedIntervention,  28},
+  {"sampleRandomIntervention", (DL_FUNC) &sampleRandomIntervention, 30},
+    {"sampleFixedIntercept", (DL_FUNC) &sampleFixedIntercept, 25},
   {NULL, NULL, 0}
 };
 

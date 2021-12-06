@@ -2,27 +2,24 @@ useDynLib(HLSM,.registration=TRUE)
 import("MASS", "coda", "igraph")
 importFrom("grDevices", "dev.new", "dev.off", "pdf", "palette")
 importFrom("graphics", "layout", "par", "plot", "rect", "segments",
-             "text", "matplot")
+             "text", "matplot", "axis")
 importFrom("methods", "is")
 importFrom("abind", "abind")
 importFrom("stats", "cmdscale", "quantile", "rnorm", "sd", "acf", "aggregate", "as.ts", "getCall", "setNames")
 
 
 
-export( "HLSMrandomEF",
-        "HLSMfixedEF",
-        "plotDiagnostic",
-        "plotLikelihood",
-        "plotHLSM.random.fit",
-        "plotHLSM.fixed.fit",
-        "plotHLSM.LS",	
+export("HLSMrandomEF",
+       "HLSMfixedEF",
+        "LSM",
+        "HLSMplotLikelihood",
+        "HLSMplot.random.fit",
+        "HLSMplot.fixed.fit",
+        "HLSMplot.fit.LS",	
 	"getBeta",
 	"getIntercept",
-	"getAlpha",
 	"getLS",
 	"getLikelihood",
-        "HLSMfixed.covplots",
-        "HLSMrandom.covplots",
         "HLSMdiag",
         "HLSMcovplots"
 )

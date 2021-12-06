@@ -2,6 +2,7 @@
 ##get diagnostic plot of the chain of interest
 ##chains can be extracted from get' ' funcions and passed to plot.HLSM
 plotDiagnostic = function(chain){
+	warning("this function will be removed in version 0.9.1")
     par(mfrow = c(2,2))
     draws = length(chain)
     plot(1:draws,chain,type='l', xlab = 'Iterations', ylab = 'Parameter', main = 'Trace plot')

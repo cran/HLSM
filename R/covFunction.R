@@ -39,8 +39,10 @@ getReceiverCov = function(X,nnodes,nodenames){
 
 		for(kk in 1:length(KK)){
 
-			k1 = which(nodenames[[ii]] == KK[kk])
+                    k1 = which(nodenames[[ii]] == KK[kk])
 
+                    if(length(k1)==0){ stop('Network nodenames do not match sender cov nodenames')}
+                    
 			XX[[ii]][,k1,] = sapply(1:PP,function(x)rep(as.numeric(Xsm[which(Xsm$Node==KK[kk]),-c(x1,x2)][x]),nnodes[ii]))
 
 	}
@@ -89,6 +91,7 @@ getSenderCov = 	function(X,nnodes,nodenames){
 
 			k1 = which(nodenames[[ii]] == KK[kk])
 
+                    if(length(k1)==0){ stop('Network nodenames do not match sender cov nodenames')}
 			Xind = which(Xsm$Node==KK[kk])
 
 			for(ll in 1:PP){
@@ -110,49 +113,38 @@ getSenderCov = 	function(X,nnodes,nodenames){
 getEdgeCov = function(X,nnodes,nodenames){
 
 	if(all(dimnames(X)[[2]] != 'id')){stop('network id is not provided. Use name id to name the first column of X')}
-
 	if(all(dimnames(X)[[2]] != 'Sender')){stop('Sender nodes are not provided. Use name Sender for the second column')}
-
 	if(all(dimnames(X)[[2]] != 'Receiver')){stop('Receiver nodes are not provided. Use name Receiver for the third column')}
 
-	netlist = unique(X$id)
-
+    netlist = unique(X$id)
 	XX = list()
-
 	PP = dim(X)[2] - 3
 
 	for(ii in 1:length(netlist)){
 
 		XX[[ii]] = array(0, dim = c(nnodes[ii],nnodes[ii],PP))
-
-		Xsm = X[which(X$id == netlist[ii]),]
-
+		Xsm = X[which(X$id == netlist[ii]),] ## removes rows of df for network ii
 		KK = unique(c(Xsm$Receiver,Xsm$Sender))
-
 		if(length(KK) != nnodes[ii])(warning('Missing data replaced by 0'))
-
 		dimnames(XX[[ii]])[[1]] = dimnames(XX[[ii]])[[2]] = nodenames[[ii]]
 
-		KK1 = Xsm$Sender
-
+            KK1 = Xsm$Sender
 		KK2 = Xsm$Receiver
 
 		x1 = which(dimnames(Xsm)[[2]] == 'id')
-
 		x2 = which(dimnames(Xsm)[[2]] == 'Sender')
-
 		x3 = which(dimnames(Xsm)[[2]] == 'Receiver')
 
+  
 		for(kk in 1:nrow(Xsm)){		
 
 			k1 = which(nodenames[[ii]] == KK1[kk])
-
 			k2 = which(nodenames[[ii]] == KK2[kk])
 
 			XX[[ii]][k1,k2,] = as.numeric(Xsm[kk,-c(x1,x2,x3)])
-
-	}
-
+                    if(length(k1)==0 | length(k2)==0){ stop('Network nodenames do not match edgecov nodenames')}
+                }
+               
 	}
 
 	return(XX)

@@ -29,11 +29,10 @@ HLSMrandomEF = function(Y,
                         priors = NULL,
                         tune = NULL,
                         tuneIn = TRUE,
-                        TT = NULL,
-                        dd,
+                        dd=2,
                         niter)
 {
-  intervention <- 0
+
   #X and Y are provided as list.
   if (class(Y) != 'list') {
     if (dim(Y)[2] != 4) {
@@ -53,7 +52,8 @@ HLSMrandomEF = function(Y,
       nn = sapply(1:length(Y), function(x)
         nrow(Y[[x]]))
       nodenames = lapply(1:length(Y), function(x)
-        rownames(Y[[x]]))
+          rownames(Y[[x]]))
+      if(sum(sapply(nodenames, is.null))>=1){nodenames=lapply(1:length(Y), function(x) 1:dim(Y[[x]])[1])}
     }
 
     if (dim(Y[[1]])[1] != dim(Y[[1]])[2] & dim(Y[[1]])[2] == 4) {
@@ -170,8 +170,6 @@ HLSMrandomEF = function(Y,
   if (is.null(priors)) {
     MuBeta = rep(0, (PP + 1))
     VarBeta = rep(1, (PP + 1))
-    MuAlpha = 0
-    VarAlpha = 1
     MuZ = c(0, 0)
     VarZ = c(20, 20)
     PriorA = 100
@@ -181,8 +179,6 @@ HLSMrandomEF = function(Y,
       (stop("priors must be of class list, if not NULL"))
     MuBeta = priors$MuBeta
     VarBeta = priors$VarBeta
-    MuAlpha = priors$MuAlpha
-    VarAlpha = priors$VarAlpha
     MuZ = priors$MuZ
     VarZ = priors$VarZ
     PriorA = priors$PriorA
@@ -227,9 +223,7 @@ HLSMrandomEF = function(Y,
     Z0 = unlist(Z00)
     beta0 = replicate(KK, rnorm(PP, 0, 1))
     intercept0  = rnorm(KK, 0, 1)
-    if (intervention == 1) {
-      alpha0 = rnorm(1, 0, 1)
-    }
+
     print("Starting Values Set")
   } else{
     if (class(initialVals) != 'list')
@@ -237,18 +231,12 @@ HLSMrandomEF = function(Y,
     Z0 = initialVals$ZZ
     beta0 = initialVals$beta
     intercept0 = initialVals$intercept
-    if(intervention == 1){ alpha0 = initialVals$alpha}
-  }
+}
 
-  if (intervention == 0) {
-    alpha0 = 0
-    TT = rep(0, KK)
-  }
 
   ###tuning parameters#####
   if (is.null(tune)) {
     a.number = 5
-    tuneAlpha = 0.9
     tuneBeta = array(1, dim = c(PP, KK))
     tuneInt = rep(0.2, KK)
     tuneZ =  lapply(1:KK, function(x)
@@ -257,7 +245,6 @@ HLSMrandomEF = function(Y,
     if (class(tune) != 'list')
       (stop("tune must be of class list, if not NULL"))
     a.number = 1
-    tuneAlpha = tune$tuneAlpha
     tuneBeta = tune$tuneBeta
     tuneInt = tune$tuneInt
     tuneZ = tune$tuneZ
@@ -278,27 +265,20 @@ HLSMrandomEF = function(Y,
           XX = XX,
           YY = YY,
           ZZ = Z0,
-          TT = TT,
           beta = beta0 ,
           intercept = intercept0,
-          alpha = alpha0,
-          MuAlpha = MuAlpha,
-          SigmaAlpha = VarAlpha,
           MuBeta = MuBeta,
           SigmaBeta = VarBeta,
           MuZ = MuZ,
           VarZ = VarZ,
           tuneBetaAll = tuneBeta,
           tuneInt = tuneInt,
-          tuneAlpha = tuneAlpha,
           tuneZAll = unlist(tuneZ),
           niter = 200,
           PriorA = PriorA,
-          PriorB = PriorB,
-          intervention = intervention
+          PriorB = PriorB
         )
 
-        tuneAlpha = adjust.my.tune(tuneAlpha, rslt$acc$alpha, 1)
         tuneZ = lapply(1:KK, function(x)
           adjust.my.tune(tuneZ[[x]], rslt$acc$Z[[x]], 2))
         tuneBeta = array(sapply(1:KK, function(x)
@@ -323,24 +303,18 @@ HLSMrandomEF = function(Y,
     XX = XX,
     YY = YY,
     ZZ = Z0,
-    TT = TT,
     beta = beta0 ,
     intercept = intercept0,
-    alpha = alpha0,
-    MuAlpha = MuAlpha,
-    SigmaAlpha = VarAlpha,
     MuBeta = MuBeta,
     SigmaBeta = VarBeta,
     MuZ = MuZ,
     VarZ = VarZ,
     tuneBetaAll = tuneBeta,
     tuneInt = tuneInt,
-    tuneAlpha = tuneAlpha,
     tuneZAll = unlist(tuneZ),
     niter = niter,
     PriorA = PriorA,
-    PriorB = PriorB,
-    intervention = intervention
+    PriorB = PriorB
   )
   
   ##Procrutes transformation on the final draws of the latent positions
@@ -363,31 +337,18 @@ HLSMrandomEF = function(Y,
   rslt$draws$ZZ = Ztransformed
   
   rslt$call = match.call()
-  if (noCOV == TRUE & intervention == 0) {
+  if (noCOV == TRUE) {
     rslt$tune = list(tuneZ = tuneZ, tuneInt = tuneInt)
     rslt$draws$Beta = NA
-    rslt$draws$Alpha = NA
   }
-  if (noCOV == TRUE & intervention == 1) {
-    rslt$tune = list(tuneAlpha = tuneAlpha,
-                     tuneZ = tuneZ,
-                     tuneInt = tuneInt)
-    rslt$draws$Beta = NA
-  }
-  if (noCOV == FALSE & intervention == 0) {
+
+ 
+  if (noCOV == FALSE) {
     rslt$tune = list(tuneBeta = tuneBeta,
                      tuneZ = tuneZ,
                      tuneInt = tuneInt)
-    rslt$draws$Alpha = NA
   }
-  if (noCOV == FALSE & intervention == 1) {
-    rslt$tune = list(
-      tuneBeta = tuneBeta,
-      tuneAlpha = tuneAlpha,
-      tuneZ = tuneZ,
-      tuneInt = tuneInt
-    )
-  }
+
   
   class(rslt) = 'HLSM'
   rslt
