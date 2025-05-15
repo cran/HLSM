@@ -19,20 +19,21 @@
 #library(MASS)
 LSM= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
      FullX = NULL, initialVals = NULL, priors = NULL, tune = NULL,
-        tuneIn = TRUE,dd=2,estimate.intercept=FALSE, niter)
+        tuneIn = TRUE,dd=2,estimate.intercept=FALSE, niter, verbose=TRUE)
 {
 
     ## Y should be matrix or a dataframe
-  #X and Y are provided as list. 
-    if(class(Y)[1] == 'matrix'){
+    if(is(Y, 'matrix')){
         KK = 1
+        diag(Y)=0
 	if(dim(Y)[1] == dim(Y)[2]){
             Y=list(Y)
             nn =sapply(1:length(Y),function(x) nrow(Y[[x]]))
             nodenames=lapply(1:length(Y), function(x) rownames(Y[[x]]))
             if(sum(sapply(nodenames, is.null))>=1){nodenames=lapply(1:length(Y), function(x) 1:dim(Y[[x]])[1])}}else{stop('Y must be a nxn matrix or dataframe')}}
 
-    if(class(Y) =='dataframe'){ 
+	
+    if(is(Y, 'dataframe')){ 
 	if(dim(Y)[1] != dim(Y)[2] & dim(Y)[2] == 3){
             nn = length(unique(c(Y$Receiver,Y$Sender)))
             Y$id=rep(1, nn)
@@ -54,14 +55,14 @@ LSM= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
 	if(is.null(FullX)){
 	if(!is.null(edgeCov) | !is.null(senderCov)| !is.null(receiverCov)){
             if(!is.null(edgeCov)){
-		if(class(edgeCov) != 'data.frame'){
+		if(is(edgeCov,'data.frame')==FALSE){
                     stop('edgeCov must be of class data.frame')}
                 temp.n=dim(edgeCov)[1]
                 edgeCov$id=rep(1, temp.n)
 		X1 = getEdgeCov(edgeCov, nn,nodenames)
 }else(X1 =NULL)
   	  if(!is.null(senderCov)){
-		if(class(senderCov) != 'data.frame'){
+		if(is(senderCov, 'data.frame')==FALSE){
                     stop('senderCov must be of class data.frame')}
                 temp.n=dim(senderCov)[1]
                 senderCov$id=rep(1, temp.n)
@@ -70,7 +71,7 @@ LSM= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
 
 
 	  if(!is.null(receiverCov)){
-		if(class(receiverCov) != 'data.frame'){
+		if(is(receiverCov,'data.frame')==FALSE){
                     stop('receiverCov must be of class data.frame')}
                 temp.n=dim(receiverCov)[1]
                 receiverCov$id=rep(1, temp.n)
@@ -109,7 +110,7 @@ LSM= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
 }
 	if(!is.null(FullX)) X = FullX
 
-if(class(X)=="array"){X=list(X)}
+if(is(X, 'array')){X=list(X)}
 #    nn = sapply(1:length(X),function(x) nrow(X[[x]]))
 #    KK = length(X)
     PP = dim(X[[1]])[3]
@@ -124,10 +125,10 @@ if(class(X)=="array"){X=list(X)}
 	VarBeta = rep(1,(PP+1)) 
         MuZ = c(0,0)
         VarZ = c(20,20)
-        PriorA = 100
-        PriorB = 150
+        PriorA = 5
+        PriorB = 200
      }else{
-	if(class(priors) != 'list')(stop("priors must be of class list, if not NULL"))
+	if(is(priors,'list')==FALSE)(stop("priors must be of class list, if not NULL"))
 	MuBeta = priors$MuBeta
 	VarBeta = priors$VarBeta
 	MuZ = priors$MuZ
@@ -141,10 +142,10 @@ if(class(X)=="array"){X=list(X)}
     C = lapply(1:KK,function(tt){
         diag(nn[tt]) - (1/nn[tt]) * array(1, dim = c(nn[tt],nn[tt]))})
     Z0 = lapply(1:KK,function(tt){
-        g = graph.adjacency(Y[[tt]]);
-        ss = shortest.paths(g);
+        g = graph_from_adjacency_matrix(Y[[tt]]);
+        ss = distances(g);
         ss[ss > 4] = 4;
-        Z0 = cmdscale(ss,k = dd);
+        Z0 = cmdscale(ss, k = dd);
         dimnames(Z0)[[1]] = dimnames(YY[[tt]])[[1]];
         return(Z0)})	
     Z00 = lapply(1:KK,function(tt)C[[tt]]%*%Z0[[tt]])
@@ -156,14 +157,14 @@ if(class(X)=="array"){X=list(X)}
         Z0 = unlist(Z00)
          beta0 = rnorm(PP,0,1)
          if(estimate.intercept==FALSE){
-                 intercept0=round(log(nn)/2)}
-         else if(class(estimate.intercept)!="logical"){intercept0=estimate.intercept}
+                 intercept0=0}
+         else if(is(estimate.intercept, 'logical')==FALSE){intercept0=estimate.intercept}
          else{intercept0 = rnorm(1, 0, 1)}
              
          
-        print("Starting Values Set")
+        if(verbose){message("Starting Values Set")}
     }else{
-	if(class(initialVals) != 'list')(stop("initialVals must be of class list, if not NULL"))
+	if(is(initialVals, 'list')==FALSE)(stop("initialVals must be of class list, if not NULL"))
 	Z0 = initialVals$ZZ
 	beta0 = initialVals$beta
 	intercept0 = initialVals$intercept
@@ -176,7 +177,7 @@ if(class(X)=="array"){X=list(X)}
             tuneInt = 0.2
             tuneZ =  lapply(1:KK,function(x) rep(1.2,nn[x]))          
             } else{
-         	if(class(tune) != 'list')(stop("tune must be of class list, if not NULL"))
+         	if(is(tune, 'list')==FALSE)(stop("tune must be of class list, if not NULL"))
                  a.number = 1
                  tuneBeta = tune$tuneBeta
                  if(estimate.intercept==TRUE){tuneInt = tune$tuneInt}
@@ -192,7 +193,7 @@ if(estimate.intercept==TRUE){
     tuneX = 1
     if(tuneIn == TRUE){
     while(do.again ==1){
-        print('Tuning the Sampler')
+        if(verbose){message('Tuning the Sampler')}
         for(counter in 1:a.number)
 { 
             rslt = MCMCfixedEF(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
@@ -201,14 +202,13 @@ if(estimate.intercept==TRUE){
      	    tuneZ = lapply(1:KK,function(x)adjust.my.tune(tuneZ[[x]], rslt$acc$Z[[x]], 2))
             tuneBeta = adjust.my.tune(tuneBeta, rslt$acc$beta,1)
             tuneInt =  adjust.my.tune(tuneInt,rslt$acc$intercept,1)
-            print(paste('TuneDone = ',tuneX))
             tuneX = tuneX+1
     }
     extreme = lapply(1:KK,function(x)which.suck(rslt$acc$Z[[x]],2))
     do.again = max(sapply(extreme, length)) > max(nn)
 
 }
-    print("Tuning is finished")  
+    if(verbose){message("Tuning is finished")}  
 }
 
     rslt = MCMCfixedEF(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
@@ -218,13 +218,13 @@ if(estimate.intercept==TRUE){
 
 
 #### Estimating Intercept = FALSE!########
-
-if(estimate.intercept==FALSE | class(estimate.intercept)!='logical'){
+##default intercept is 0##
+if(estimate.intercept==FALSE){
     do.again = 1
     tuneX = 1
     if(tuneIn == TRUE){
     while(do.again ==1){
-        print('Tuning the Sampler')
+        if(verbose){message('Tuning the Sampler')}
         for(counter in 1:a.number)
 { 
             rslt = MCMCfixedIntercept(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
@@ -232,19 +232,48 @@ if(estimate.intercept==FALSE | class(estimate.intercept)!='logical'){
 		MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneInt = tuneInt,tuneZAll = unlist(tuneZ),niter = 200,PriorA = PriorA, PriorB = PriorB)
      	    tuneZ = lapply(1:KK,function(x)adjust.my.tune(tuneZ[[x]], rslt$acc$Z[[x]], 2))
             tuneBeta = adjust.my.tune(tuneBeta, rslt$acc$beta,1)
-            print(paste('TuneDone = ',tuneX))
             tuneX = tuneX+1
     }
     extreme = lapply(1:KK,function(x)which.suck(rslt$acc$Z[[x]],2))
     do.again = max(sapply(extreme, length)) > max(nn)
 
 }
-    print("Tuning is finished")  
+    if(verbose){message("Tuning is finished") } 
 }
 
     rslt = MCMCfixedIntercept(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
 		beta = beta0 ,intercept = intercept0, MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneInt = tuneInt, tuneZAll = unlist(tuneZ),niter = niter,PriorA = PriorA, PriorB = PriorB)
 }
+
+
+if(is(estimate.intercept,'numeric')){
+	intercept0=estimate.intercept
+    do.again = 1
+    tuneX = 1
+    if(tuneIn == TRUE){
+    while(do.again ==1){
+        if(verbose){message('Tuning the Sampler')}
+        for(counter in 1:a.number)
+{ 
+            rslt = MCMCfixedIntercept(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
+		beta = beta0 ,intercept = intercept0,
+		MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneInt = tuneInt,tuneZAll = unlist(tuneZ),niter = 200,PriorA = PriorA, PriorB = PriorB)
+     	    tuneZ = lapply(1:KK,function(x)adjust.my.tune(tuneZ[[x]], rslt$acc$Z[[x]], 2))
+            tuneBeta = adjust.my.tune(tuneBeta, rslt$acc$beta,1)
+            tuneX = tuneX+1
+    }
+    extreme = lapply(1:KK,function(x)which.suck(rslt$acc$Z[[x]],2))
+    do.again = max(sapply(extreme, length)) > max(nn)
+
+}
+    if(verbose){message("Tuning is finished") } 
+}
+
+    rslt = MCMCfixedIntercept(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
+		beta = beta0 ,intercept = intercept0, MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneInt = tuneInt, tuneZAll = unlist(tuneZ),niter = niter,PriorA = PriorA, PriorB = PriorB)
+}
+    
+
     
     
     ##Procrutes transformation on the final draws of the latent positions

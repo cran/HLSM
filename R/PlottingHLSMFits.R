@@ -20,15 +20,15 @@ get_HLSM_type <- function(object_list) {
 }
 
 
-HLSMcovplots=function(fitted.model, burnin=0, thin=1){
-	if(class(fitted.model)!="HLSM"){stop("Fitted Model must be of class HLSM")}
+HLSMcovplots=function(fitted.model, burnin=0, thin=1, verbose=TRUE){
+	if(is(fitted.model, 'HLSM')==FALSE){stop("Fitted Model must be of class HLSM")}
 	type=get_HLSM_type(list(fitted.model))
 	if(type=='random'){
-		HLSMplot.random.fit(fitted.model, burnin, thin)
-		}else{HLSMplot.fixed.fit(fitted.model,  burnin, thin)}
+		HLSMplot.random.fit(fitted.model, burnin, thin, verbose)
+		}else{HLSMplot.fixed.fit(fitted.model,  burnin, thin, verbose)}
 }
 
-HLSMplot.random.fit=function(fitted.model, burnin = 0, thin = 1){
+HLSMplot.random.fit=function(fitted.model, burnin = 0, thin = 1, verbose){
 mycolors=c("navy", "orange", "darkmagenta")
 	
 	myInt=getIntercept(fitted.model, burnin=burnin, thin=thin)
@@ -40,7 +40,7 @@ mycolors=c("navy", "orange", "darkmagenta")
 		p=dim(draws)[2]
 		myTitles=paste('X', 1:p, sep="")
 		n.nets=dim(draws)[3]
-		print("Covariates are in order of Edge, Sender, Receiver")}else if(is.null(myInt)==FALSE & is.null(myBetas)==TRUE){
+		message("Covariates are in order of Edge, Sender, Receiver")}else if(is.null(myInt)==FALSE & is.null(myBetas)==TRUE){
 	     p=1
 	     temp=dim(myInt)
 	     draws=array(0, dim=c(temp[1],1,temp[2]))
@@ -54,7 +54,7 @@ mycolors=c("navy", "orange", "darkmagenta")
 		p=dim(draws)[2]
 		myTitles=c("Int", paste('X', 1:(p-1), sep=""))	
 		n.nets=dim(draws)[3]
-		print("Covariates are in order of Edge, Sender, Receiver")
+		if(verbose){message("Covariates are in order of Edge, Sender, Receiver")}
 	}else{stop("There are not any covariates to plot")}
 
 x=1:n.nets
@@ -73,7 +73,7 @@ plot(x, int.quantiles[3,], pch=".",
 
 ###############
 
-HLSMplot.fixed.fit=function(fitted.model, burnin =0, thin = 1){
+HLSMplot.fixed.fit=function(fitted.model, burnin =0, thin = 1, verbose){
 	mycolors=c("navy", "orange", "darkmagenta")
 	
 	myInt=getIntercept(fitted.model, burnin=burnin, thin=thin)
@@ -86,7 +86,7 @@ HLSMplot.fixed.fit=function(fitted.model, burnin =0, thin = 1){
 		p=dim(draws)[2]
 		myXlabels=paste('X', 1:p, sep="")
 		mytitle="Regression Coefficients"	
-		print("Covariates are in order of Edge, Sender, Receiver")
+		if(verbose){message("Covariates are in order of Edge, Sender, Receiver")}
 	}
 	if(is.null(myInt)==FALSE & is.null(myBetas)==TRUE){
 	     p=1
@@ -99,7 +99,7 @@ HLSMplot.fixed.fit=function(fitted.model, burnin =0, thin = 1){
 		p=dim(draws)[2]
 		myXlabels=c("Int", paste('X', 1:(p-1), sep=""))	
 		mytitle="Regression Coefficients"
-		print("Covariates are in order of Edge, Sender, Receiver")
+		if(verbose){message("Covariates are in order of Edge, Sender, Receiver")}
 	}
 
 x=1:p
@@ -129,7 +129,6 @@ plot(x, int.quantiles[3,], pch=".", xlim=c(0.75, p+0.25), ylim=c(min(int.quantil
 
 ######LATENT SPACE POSTIONS########
 
-
 HLSMplotLS = function(LS,xx,fitted.model, node.name = FALSE,nodenames = NULL){
 	xcor = apply(LS[[xx]][,1,],1,mean)
 	ycor = apply(LS[[xx]][,2,],1,mean)
@@ -140,24 +139,7 @@ HLSMplotLS = function(LS,xx,fitted.model, node.name = FALSE,nodenames = NULL){
 	}
 }
 
-HLSMplot.fit.LS = function(fitted.model,pdfname = NULL,burnin=0,thin=1,...){
-	if(class(fitted.model)!='HLSM'){
-		stop('fitted.model must be of class HLSM')}
-#	niter = length(fitted.model$draws$Alpha)
-#	if(is.null(burnin)){burnin=0.1*niter}
-#	if(is.null(thin)){thin = round(0.9*niter/200)}
-	LS = getLS(fitted.model,burnin=burnin, thin=thin)
-	if(!is.null(pdfname)){pdf(file=paste(pdfname,'.pdf',sep=''))}else(dev.new(height = 10,width = 10))
-	if(length(LS) > 5){
-		mat = matrix(1:length(LS),ceiling(length(LS)/5),5,byrow = TRUE)
-		layout(mat,widths = rep.int(2.5,ncol(mat)), heights = rep.int(1,nrow(mat)))
-	}else{
-		x1 = ceiling(length(LS)/2)
-		par(mfrow = c(2,x1))
-	}
-	lapply(1:length(LS),function(x) HLSMplotLS(LS,x,fitted.model,...))
-	if(!is.null(pdfname))dev.off()
-}
+
 
 
 

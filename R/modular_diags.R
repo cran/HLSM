@@ -97,7 +97,7 @@ psrf_param <- function(param_mcmc_list, warn_1chain = TRUE) {
   return(result)
 }
 
-psrf_summary <- function(result) {
+psrf_summary <- function(result, verbose) {
   psrf_table <- result$psrf
   
   mask <- psrf_table[, 'Point est.'] > 1.05
@@ -109,16 +109,17 @@ psrf_summary <- function(result) {
   
   max_lim_psrf <- max(psrf_table[, 'Upper C.I.'])
   multi_psrf <- result$mpsrf
-  
+  if(verbose){
   cat("Potential Scale Reduction Factor:\n")
   cat("Gelman-Rubin between-chain convergence diagnostic.\n")
   cat("Upper C.I. near 1 indicates convergence.\n")
   cat("---\n")
   cat("Variable(s) with worst convergence\n")
-  print(bad_psrf_table)
+  message(bad_psrf_table)
   cat("---\n")
   cat("Maximum Upper C.I.: ", round(max_lim_psrf, 4), '\n')
   cat("Multivariate PSRF Point Estimate: ", multi_psrf, '\n')
+  }
 }
 
 # Raftery Functions -------------------------------------------------------
@@ -140,13 +141,15 @@ raftery_param <- function(param_mcmc) {
   return(result)
 }
 
-raftery_summary <- function(results) {
+raftery_summary <- function(results, verbose) {
   longest_stats <- lapply(results, apply, 2, max)
   chain_stats <- do.call(rbind, longest_stats)
+  if(verbose){
   rownames(chain_stats) <- paste("Chain", seq_along(results))
   cat("Raftery Diagnostics:\n")
   cat("Suggested Chain Specifications\n")
-  print(chain_stats[, c(2, 1, 3)])
+  message(chain_stats[, c(2, 1, 3)])
+  }
 }
 
 
@@ -213,7 +216,7 @@ autocorr_param <- function(param_mcmc_list, col = 1:6, lty = 1) {
 
 HLSMdiag <- function(object, burnin = 0,
                      diags = c('psrf', 'raftery', 'traceplot', 'autocorr'),
-                     col = 1:6, lty = 1) {
+                     col = 1:6, lty = 1, verbose=TRUE) {
   if (is(object, 'HLSM')) {
     object_list <- list(object)
   } else if (is(object, 'list')) {
@@ -260,6 +263,8 @@ HLSMdiag <- function(object, burnin = 0,
   
   if ('traceplot' %in% diags) {
     shape_args <- plot_shape(param_mcmc_list, type = type)
+    oldpar <- par(no.readonly=TRUE)
+    on.exit(par(oldpar))
     par(mfrow = c(shape_args$nrows, shape_args$ncols), mar = rep(2, 4))
     traceplot(param_mcmc_list[, shape_args$plotdex], 
               col = col, lty = lty)
@@ -267,6 +272,8 @@ HLSMdiag <- function(object, burnin = 0,
   
   if ('autocorr' %in% diags) {
     shape_args <- plot_shape(param_mcmc_list, type = type)
+     oldpar <- par(no.readonly=TRUE)
+    on.exit(par(oldpar))
     par(mfrow = c(shape_args$nrows, shape_args$ncols), mar = rep(2, 4))
     autocorr_param(param_mcmc_list[, shape_args$plotdex], col = col, lty = lty)
   }

@@ -63,12 +63,12 @@
 \references{
  Pitts, V., & Spillane, J. (2009). "Using social network methods to study school leadership".International Journal of Research & Method in Education, 32, 185-207
 
- Sweet, T.M., Thomas, A.C., and Junker, B.W. (2012).
+ Sweet, T.M., Thomas, A.C., and Junker, B.W. (2013).
  "Hierarchical Network Models for Education Research: Hierarchical Latent Space Models". Journal of Educational and Behavorial Statistics.
 }
 
 
-\author{Sam Adhikari}
+\author{Sam Adhikari and Tracy Sweet}
 \keyword{datasets}
 
 

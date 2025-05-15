@@ -11,17 +11,12 @@ importFrom("stats", "cmdscale", "quantile", "rnorm", "sd", "acf", "aggregate", "
 
 export("HLSMrandomEF",
        "HLSMfixedEF",
-        "LSM",
-        "HLSMplotLikelihood",
-        "HLSMplot.random.fit",
-        "HLSMplot.fixed.fit",
-        "HLSMplot.fit.LS",	
+        "LSM",	
 	"getBeta",
-	"getIntercept",
 	"getLS",
 	"getLikelihood",
         "HLSMdiag",
-        "HLSMcovplots"
+	"HLSMcovplots"
 )
        
 

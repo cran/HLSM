@@ -50,15 +50,7 @@ MCMCfixedEF = function(nn,PP,KK,dd,XX,YY,ZZ,
 	ZZFinal[[ni]] = Zsm
 }
 
-#    n00 = n0 = 1
-#    ZZx = array(out[[29]],dim = c(sum(nn),dd,niter))
-#    for(kk in 1:KK ){
-#        n1 = sum(nn[1:kk] )
-#        ZZFinal[[kk]] = array(ZZx[n00:n1,,],dim = c(nn[kk],dd,niter))
-#        accZ[[kk]] = out[[26]][n00:(n1)]/(niter)
-#        n00 = (n1) + 1
-#}
-    
+
     Zvar1 = out[[24]]
     Zvar2 = out[[25]]
     Zvar = data.frame(Zvar1,Zvar2)

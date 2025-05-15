@@ -1,17 +1,21 @@
+Encoding: UTF-8
 Package: HLSM
 Type: Package
 Title: Hierarchical Latent Space Network Model
-Version: 0.9.0
-Date: 2021-11-30
-Author: Samrachana Adhikari, Brian Junker, Tracy Sweet, Andrew C. Thomas
-Maintainer: Tracy Sweet <tsweet@umd.edu>
-Description: Implements Hierarchical Latent Space Network Model (HLSM) for ensemble of networks as described in Sweet, Thomas & Junker (2013). <DOI:10.3102/1076998612458702>. 
-Depends: R (>= 4.1.0)
+Version: 0.9.1
+Date: 2025-05-07
+Authors@R: c(person(given = "Samrachana", family = "Adhikari", role = "aut"), person(given="Tracy", family = "Sweet", role = c("aut", "cre"), email = "tsweet@umd.edu"))
+Description: Fits latent space models for single networks and hierarchical latent space models for ensembles of networks as described in Sweet, Thomas & Junker (2013). <DOI:10.3102/1076998612458702>. 
+Depends: R (>= 4.4.0)
 ByteCompile: TRUE
 License: GPL (> 3)
 Imports: MASS, coda, igraph, grDevices, graphics, methods, abind, stats
 LazyData: yes
 NeedsCompilation: yes
-Packaged: 2021-12-05 16:35:22 UTC; tsweet
+Packaged: 2025-05-13 14:03:43 UTC; tsweet
+RoxygenNote: 7.3.2
+Author: Samrachana Adhikari [aut],
+  Tracy Sweet [aut, cre]
+Maintainer: Tracy Sweet <tsweet@umd.edu>
 Repository: CRAN
-Date/Publication: 2021-12-06 13:00:02 UTC
+Date/Publication: 2025-05-15 14:10:02 UTC

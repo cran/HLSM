@@ -29,12 +29,12 @@ HLSMrandomEF = function(Y,
                         priors = NULL,
                         tune = NULL,
                         tuneIn = TRUE,
-                        dd=2,
-                        niter)
+                        dd=2, 
+                        niter, verbose=TRUE)
 {
 
   #X and Y are provided as list.
-  if (class(Y) != 'list') {
+  if (is(Y, 'list')==FALSE) {
     if (dim(Y)[2] != 4) {
       stop('Invalid data structure type')
     }
@@ -46,7 +46,7 @@ HLSMrandomEF = function(Y,
 #    stop('Invalid data structure type')
 #  }
 
-  if (class(Y) == 'list') {
+  if(is(Y, 'list')) {
     KK = length(Y)
     if (dim(Y[[1]])[1] == dim(Y[[1]])[2]) {
       nn = sapply(1:length(Y), function(x)
@@ -66,7 +66,7 @@ HLSMrandomEF = function(Y,
     }
   }
 
-  if (class(Y) != 'list') {
+  if (is(Y, 'list')==FALSE) {
     if (dim(Y)[2] == 4) {
       nid = unique(Y$id)
       KK = length(nid)
@@ -107,21 +107,21 @@ HLSMrandomEF = function(Y,
   if (is.null(FullX)) {
     if (!is.null(edgeCov) | !is.null(senderCov) | !is.null(receiverCov)) {
       if (!is.null(edgeCov)) {
-        if (class(edgeCov) != 'data.frame') {
+        if (is(edgeCov,'data.frame')==FALSE) {
           stop('edgeCov must be of class data.frame')
         }
         X1 = getEdgeCov(edgeCov, nn, nodenames)
       } else
         (X1 = NULL)
       if(!is.null(senderCov)){
-        if(class(senderCov) != 'data.frame'){
+        if(is(senderCov,'data.frame')==FALSE){
           stop('senderCov must be of class data.frame')}
         X2 = getSenderCov(senderCov, nn,nodenames)
       }else(X2 = NULL)
 
 
       if(!is.null(receiverCov)){
-        if(class(receiverCov) != 'data.frame'){
+        if(is(receiverCov,'data.frame')==FALSE){
           stop('receiverCov must be of class data.frame')}
         X3 = getReceiverCov(receiverCov, nn,nodenames)
       }else(X3 = NULL)
@@ -175,7 +175,7 @@ HLSMrandomEF = function(Y,
     PriorA = 100
     PriorB = 150
   } else{
-    if (class(priors) != 'list')
+    if (is(priors,'list')==FALSE)
       (stop("priors must be of class list, if not NULL"))
     MuBeta = priors$MuBeta
     VarBeta = priors$VarBeta
@@ -193,9 +193,9 @@ HLSMrandomEF = function(Y,
     diag(nn[tt]) - (1 / nn[tt]) * array(1, dim = c(nn[tt], nn[tt]))
   })
   Z0 = lapply(1:KK, function(tt) {
-    g = graph.adjacency(Y[[tt]])
+    g = graph_from_adjacency_matrix(Y[[tt]])
 
-    ss = shortest.paths(g)
+    ss = distances(g)
 
     ss[ss > 4] = 4
 
@@ -224,9 +224,9 @@ HLSMrandomEF = function(Y,
     beta0 = replicate(KK, rnorm(PP, 0, 1))
     intercept0  = rnorm(KK, 0, 1)
 
-    print("Starting Values Set")
+    if(verbose){message("Starting Values Set")}
   } else{
-    if (class(initialVals) != 'list')
+    if (is(initialVals, 'list')==FALSE)
       (stop("initialVals must be of class list, if not NULL"))
     Z0 = initialVals$ZZ
     beta0 = initialVals$beta
@@ -242,7 +242,7 @@ HLSMrandomEF = function(Y,
     tuneZ =  lapply(1:KK, function(x)
       rep(1.2, nn[x]))
   } else{
-    if (class(tune) != 'list')
+    if (is(tune,'list')==FALSE)
       (stop("tune must be of class list, if not NULL"))
     a.number = 1
     tuneBeta = tune$tuneBeta
@@ -255,7 +255,7 @@ HLSMrandomEF = function(Y,
   tuneX = 1
   if (tuneIn == TRUE) {
     while (do.again == 1) {
-      print('Tuning the Sampler')
+      if(verbose){message('Tuning the Sampler')}
       for (counter in 1:a.number) {
         rslt = MCMCfunction(
           nn = nn,
@@ -285,7 +285,6 @@ HLSMrandomEF = function(Y,
           adjust.my.tune(tuneBeta[, x], rslt$acc$beta[, x], 1)), dim = c(PP, KK))
         tuneInt = sapply(1:KK, function(x)
           adjust.my.tune(tuneInt[x], rslt$acc$intercept[x], 1))
-        print(paste('TuneDone = ', tuneX))
         tuneX = tuneX + 1
       }
       extreme = lapply(1:KK, function(x)
@@ -293,7 +292,7 @@ HLSMrandomEF = function(Y,
       do.again = max(sapply(extreme, length)) > 5
 
     }
-    print("Tuning is finished")
+    if(verbose){message("Tuning is finished")}
   }
   rslt = MCMCfunction(
     nn = nn,

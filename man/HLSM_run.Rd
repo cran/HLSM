@@ -21,15 +21,15 @@
 
 HLSMrandomEF(Y,edgeCov=NULL, receiverCov = NULL, senderCov = NULL, 
         FullX = NULL,initialVals = NULL, priors = NULL, tune = NULL,
-        tuneIn = TRUE,dd=2, niter)
+        tuneIn = TRUE,dd=2, niter, verbose=TRUE)
 
 HLSMfixedEF(Y,edgeCov=NULL, receiverCov = NULL, senderCov = NULL,
         FullX = NULL, initialVals = NULL, priors = NULL, tune = NULL,
-        tuneIn = TRUE,dd=2, niter)
+        tuneIn = TRUE,dd=2, estimate.intercept=FALSE, niter, verbose=TRUE)
         
 LSM(Y,edgeCov=NULL, receiverCov = NULL, senderCov = NULL, 
         FullX = NULL,initialVals = NULL, priors = NULL, tune = NULL,
-        tuneIn = TRUE,dd=2, estimate.intercept=FALSE, niter)
+        tuneIn = TRUE,dd=2, estimate.intercept=FALSE, niter, verbose=TRUE)
 
 getBeta(object, burnin = 0, thin = 1)
 getIntercept(object, burnin = 0, thin = 1)
@@ -47,7 +47,8 @@ getLikelihood(object, burnin = 0, thin = 1)
 
         (ii). list of data frame with columns \code{Sender}, \code{Receiver} and \code{Outcome} for \code{K} different networks
 
-        (iii). a dataframe with columns named as follows: \code{id} to identify network, \code{Receiver} for receiver nodes, \code{Sender} for sender nodes and finally, \code{Outcome} for the edge outcome.       
+        (iii). a dataframe with columns named as follows: \code{id} to identify network, \code{Receiver} for receiver nodes, \code{Sender} for sender nodes and finally, \code{Outcome} for the edge outcome.     
+        Note that for LSM, Y must be an adjacency matrix.
 }
 
 \item{edgeCov}{
@@ -158,6 +159,9 @@ getLikelihood(object, burnin = 0, thin = 1)
 \item{thin}{
 	numeric value by which the chain is to be thinned while extracting results from the 'HLSM' object. Default is \code{thin = 1}. 
 }
+\item{verbose}{
+logical value; TRUE results in messages during MCMC tuning
+}
 }
 
 
@@ -195,25 +199,17 @@ See also \code{LSM} for fitting network data from a single network.
 \examples{
 
 library(HLSM)
+data(schoolsAdviceData)
 
 #Set values for the inputs of the function
 priors = NULL
 tune = NULL
 initialVals = NULL
 niter = 10
-
-#Fixed effect HLSM on Pitt and Spillane data 
-
-fixed.fit = HLSMfixedEF(Y = ps.advice.mat, senderCov=ps.node.df,
-	initialVals = initialVals,priors = priors,
-	tune = tune,tuneIn = FALSE,dd = 2,niter = niter)
-summary(fixed.fit)
-
-
+\donttest{
 lsm.fit = LSM(Y=School9Network,edgeCov=School9EdgeCov, 
-senderCov=School9NodeCov, receiverCov=School9NodeCov, niter = niter)
-names(lsm.fit)
-
+senderCov=School9NodeCov, receiverCov=School9NodeCov, estimate.intercept=0, niter = niter)
+}
 }
 
 

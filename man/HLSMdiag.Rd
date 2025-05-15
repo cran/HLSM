@@ -12,7 +12,7 @@
 
 HLSMdiag(object, burnin = 0,
          diags = c('psrf', 'raftery', 'traceplot', 'autocorr'),
-         col = 1:6, lty = 1)
+         col = 1:6, lty = 1, verbose=TRUE)
 }
 
 \arguments{
@@ -36,6 +36,7 @@ HLSMdiag(object, burnin = 0,
 \item{lty}{
   a character or integer vector specifying the linetype for the traceplot and autocorr plot
 }
+\item{verbose}{logical value that determines whether output is printed}
 }
 
 

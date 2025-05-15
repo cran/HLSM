@@ -18,14 +18,14 @@
 #library(MASS)
 HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
                       FullX = NULL, initialVals = NULL, priors = NULL, tune = NULL,
-        tuneIn = TRUE,dd=2, niter)
+        tuneIn = TRUE,dd=2, estimate.intercept=FALSE, niter, verbose=TRUE)
 {
 
   #X and Y are provided as list. 
-    if(class(Y) != 'list'){
+    if(is(Y, 'list')==FALSE){
 	if(dim(Y)[2] != 4){stop('Invalid data structure type')} }
 	
-    if(class(Y) == 'list'){ 
+    if(is(Y,'list')){ 
         KK = length(Y)
 	if(dim(Y[[1]])[1] == dim(Y[[1]])[2]){
             nn =sapply(1:length(Y),function(x) nrow(Y[[x]]))
@@ -37,7 +37,7 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
 		nodenames = lapply(1:length(Y), function(x) unique(c(Y[[x]]$Receiver,Y[[x]]$Sender)))
 	}	}
 
-    if(class(Y) != 'list'){
+    if(is(Y, 'list')==FALSE){
 	if(dim(Y)[2] == 4){
 		nid = unique(Y$id)
 		KK = length(nid)
@@ -71,19 +71,19 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
 	if(is.null(FullX)){
 	if(!is.null(edgeCov) | !is.null(senderCov)| !is.null(receiverCov)){
 	  if(!is.null(edgeCov)){
-		if(class(edgeCov) != 'data.frame'){
+		if(is(edgeCov,'data.frame')==FALSE){
 			stop('edgeCov must be of class data.frame')}
 		X1 = getEdgeCov(edgeCov, nn,nodenames)
 }else(X1 =NULL)
   	  if(!is.null(senderCov)){
-		if(class(senderCov) != 'data.frame'){
+		if(is(senderCov,'data.frame')==FALSE){
 			stop('senderCov must be of class data.frame')}
 		X2 = getSenderCov(senderCov, nn,nodenames)
 }else(X2 = NULL)
 
 
 	  if(!is.null(receiverCov)){
-		if(class(receiverCov) != 'data.frame'){
+		if(is(receiverCov,'data.frame')==FALSE){
 			stop('receiverCov must be of class data.frame')}
 		X3 = getReceiverCov(receiverCov, nn,nodenames)
 }else(X3 = NULL)	
@@ -132,13 +132,13 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
 
     if(is.null(priors)){
 	MuBeta= rep(0,(PP+1)) 
-	VarBeta = rep(1,(PP+1)) 
+	VarBeta = rep(5,(PP+1)) 
         MuZ = c(0,0)
         VarZ = c(20,20)
-        PriorA = 100
-        PriorB = 150
+        PriorA = 5
+        PriorB = 200
      }else{
-	if(class(priors) != 'list')(stop("priors must be of class list, if not NULL"))
+	if(is(priors,'list')==FALSE)(stop("priors must be of class list, if not NULL"))
 	MuBeta = priors$MuBeta
 	VarBeta = priors$VarBeta
 	MuZ = priors$MuZ
@@ -152,8 +152,8 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
     C = lapply(1:KK,function(tt){
         diag(nn[tt]) - (1/nn[tt]) * array(1, dim = c(nn[tt],nn[tt]))})
     Z0 = lapply(1:KK,function(tt){
-        g = graph.adjacency(Y[[tt]]);
-        ss = shortest.paths(g);
+        g = graph_from_adjacency_matrix(Y[[tt]]);
+        ss = distances(g);
         ss[ss > 4] = 4;
         Z0 = cmdscale(ss,k = dd);
         dimnames(Z0)[[1]] = dimnames(YY[[tt]])[[1]];
@@ -175,10 +175,13 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
 #     }
         Z0 = unlist(Z00)
         beta0 = rnorm(PP,0,1)
-        intercept0  = rnorm(1, 0,1)
-        print("Starting Values Set")
+        if(estimate.intercept==FALSE){
+                 intercept0=0}
+         else if(is(estimate.intercept, 'logical')==FALSE){intercept0=estimate.intercept}
+         else{intercept0 = rnorm(1, 0, 1)}
+        if(verbose){message("Starting Values Set")}
     }else{
-	if(class(initialVals) != 'list')(stop("initialVals must be of class list, if not NULL"))
+	if(is(initialVals, 'list')==FALSE)(stop("initialVals must be of class list, if not NULL"))
 	Z0 = initialVals$ZZ
 	beta0 = initialVals$beta
 	intercept0 = initialVals$intercept
@@ -191,19 +194,20 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
             tuneInt = 0.2
             tuneZ =  lapply(1:KK,function(x) rep(1.2,nn[x]))          
             } else{
-         	if(class(tune) != 'list')(stop("tune must be of class list, if not NULL"))
+         	if(is(tune,'list')==FALSE)(stop("tune must be of class list, if not NULL"))
                  a.number = 1
                  tuneBeta = tune$tuneBeta
                  tuneInt = tune$tuneInt
                  tuneZ = tune$tuneZ
           }       
-  
-###Tuning the Sampler####
+  ### Tuning and Running the Sampler###
+
+if(estimate.intercept==TRUE){
     do.again = 1
     tuneX = 1
     if(tuneIn == TRUE){
     while(do.again ==1){
-        print('Tuning the Sampler')
+        if(verbose){message('Tuning the Sampler')}
         for(counter in 1:a.number)
 { 
             rslt = MCMCfixedEF(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
@@ -212,19 +216,83 @@ HLSMfixedEF= function(Y,edgeCov = NULL, receiverCov = NULL,senderCov =NULL,
      	    tuneZ = lapply(1:KK,function(x)adjust.my.tune(tuneZ[[x]], rslt$acc$Z[[x]], 2))
             tuneBeta = adjust.my.tune(tuneBeta, rslt$acc$beta,1)
             tuneInt =  adjust.my.tune(tuneInt,rslt$acc$intercept,1)
-            print(paste('TuneDone = ',tuneX))
             tuneX = tuneX+1
     }
     extreme = lapply(1:KK,function(x)which.suck(rslt$acc$Z[[x]],2))
     do.again = max(sapply(extreme, length)) > max(nn)
 
 }
-    print("Tuning is finished")  
+    if(verbose){message("Tuning is finished")}  
 }
 
     rslt = MCMCfixedEF(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
 		beta = beta0 ,intercept = intercept0,
 		MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneInt = tuneInt,tuneZAll = unlist(tuneZ),niter = niter,PriorA = PriorA, PriorB = PriorB)
+ 
+ 
+} 
+
+#### Estimating Intercept = FALSE!########
+
+if(estimate.intercept==FALSE){
+    do.again = 1
+    tuneX = 1
+    if(tuneIn == TRUE){
+    while(do.again ==1){
+        if(verbose){message('Tuning the Sampler')}
+        for(counter in 1:a.number)
+{ 
+            rslt = MCMCfixedEFfixedIntercept(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
+		beta = beta0 ,intercept = intercept0,
+		MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneZAll = unlist(tuneZ),niter = 200,PriorA = PriorA, PriorB = PriorB)
+     	    tuneZ = lapply(1:KK,function(x)adjust.my.tune(tuneZ[[x]], rslt$acc$Z[[x]], 2))
+            tuneBeta = adjust.my.tune(tuneBeta, rslt$acc$beta,1)       
+            tuneX = tuneX+1
+    }
+    extreme = lapply(1:KK,function(x)which.suck(rslt$acc$Z[[x]],2))
+    do.again = max(sapply(extreme, length)) > max(nn)
+
+}
+    if(verbose){message("Tuning is finished")}  
+}
+
+    rslt = MCMCfixedEFfixedIntercept(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
+		beta = beta0 ,intercept = intercept0,
+		MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneZAll = unlist(tuneZ),niter = niter,PriorA = PriorA, PriorB = PriorB)
+ 
+ 
+} 
+
+if(is(estimate.intercept, 'numeric')){
+	intercept0=estimate.intercept
+    do.again = 1
+    tuneX = 1
+    if(tuneIn == TRUE){
+    while(do.again ==1){
+        if(verbose){message('Tuning the Sampler')}
+        for(counter in 1:a.number)
+{ 
+            rslt = MCMCfixedEFfixedIntercept(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
+		beta = beta0 ,intercept = intercept0,
+		MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneZAll = unlist(tuneZ),niter = 200,PriorA = PriorA, PriorB = PriorB)
+     	    tuneZ = lapply(1:KK,function(x)adjust.my.tune(tuneZ[[x]], rslt$acc$Z[[x]], 2))
+            tuneBeta = adjust.my.tune(tuneBeta, rslt$acc$beta,1)
+            tuneX = tuneX+1
+    }
+    extreme = lapply(1:KK,function(x)which.suck(rslt$acc$Z[[x]],2))
+    do.again = max(sapply(extreme, length)) > max(nn)
+
+}
+   if(verbose){message("Tuning is finished") } 
+}
+
+    rslt = MCMCfixedEFfixedIntercept(nn=nn,PP=PP,KK=KK,dd=dd,XX = XX,YY = YY,ZZ = Z0,
+		beta = beta0 ,intercept = intercept0,
+		MuBeta = MuBeta,SigmaBeta = VarBeta,MuZ = MuZ,VarZ = VarZ,tuneBetaAll = tuneBeta, tuneZAll = unlist(tuneZ),niter = niter,PriorA = PriorA, PriorB = PriorB)
+ 
+ 
+} 
+
     
     ##Procrutes transformation on the final draws of the latent positions
     ##
