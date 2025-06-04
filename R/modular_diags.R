@@ -97,7 +97,7 @@ psrf_param <- function(param_mcmc_list, warn_1chain = TRUE) {
   return(result)
 }
 
-psrf_summary <- function(result, verbose) {
+psrf_summary <- function(result) {
   psrf_table <- result$psrf
   
   mask <- psrf_table[, 'Point est.'] > 1.05
@@ -109,17 +109,6 @@ psrf_summary <- function(result, verbose) {
   
   max_lim_psrf <- max(psrf_table[, 'Upper C.I.'])
   multi_psrf <- result$mpsrf
-  if(verbose){
-  cat("Potential Scale Reduction Factor:\n")
-  cat("Gelman-Rubin between-chain convergence diagnostic.\n")
-  cat("Upper C.I. near 1 indicates convergence.\n")
-  cat("---\n")
-  cat("Variable(s) with worst convergence\n")
-  message(bad_psrf_table)
-  cat("---\n")
-  cat("Maximum Upper C.I.: ", round(max_lim_psrf, 4), '\n')
-  cat("Multivariate PSRF Point Estimate: ", multi_psrf, '\n')
-  }
 }
 
 # Raftery Functions -------------------------------------------------------
@@ -141,15 +130,9 @@ raftery_param <- function(param_mcmc) {
   return(result)
 }
 
-raftery_summary <- function(results, verbose) {
+raftery_summary <- function(results) {
   longest_stats <- lapply(results, apply, 2, max)
   chain_stats <- do.call(rbind, longest_stats)
-  if(verbose){
-  rownames(chain_stats) <- paste("Chain", seq_along(results))
-  cat("Raftery Diagnostics:\n")
-  cat("Suggested Chain Specifications\n")
-  message(chain_stats[, c(2, 1, 3)])
-  }
 }
 
 
@@ -216,7 +199,7 @@ autocorr_param <- function(param_mcmc_list, col = 1:6, lty = 1) {
 
 HLSMdiag <- function(object, burnin = 0,
                      diags = c('psrf', 'raftery', 'traceplot', 'autocorr'),
-                     col = 1:6, lty = 1, verbose=TRUE) {
+                     col = 1:6, lty = 1) {
   if (is(object, 'HLSM')) {
     object_list <- list(object)
   } else if (is(object, 'list')) {
@@ -258,7 +241,6 @@ HLSMdiag <- function(object, burnin = 0,
     chain_dex <- seq_along(param_mcmc_list)
     legend <- paste("Chain", chain_dex, "=", grDevices::palette()[chain_dex],
                     collapse = '\n')
-    message("Plot Color Legend:\n", legend)
   }
   
   if ('traceplot' %in% diags) {
@@ -284,35 +266,3 @@ HLSMdiag <- function(object, burnin = 0,
 }
 
 
-# Output Printing ---------------------------------------------------------
-
-call_summary <- function(call) {
-  cat("\nCall:\n", paste(deparse(call), sep = "\n", collapse = "\n"), 
-      "\n", sep = "")
-}
-
-print.HLSMdiag <- function(x, ...) {
-  # allows this function to be flexible to adding more diagnostic summaries
-  summary_funcs <- list(call = call_summary,
-                        psrf = psrf_summary,
-                        raftery = raftery_summary)
-  if (!is(x, 'HLSMdiag')) {
-    stop("This function does not work on non-HLSMdiag objects.")
-  }
-  
-  if (!all(names(x) %in% names(summary_funcs))) {
-    stop("HLSMdiag function updated without updating print.HLSMdiag.\n",
-         "Please contact the maintainer to fix")
-  }
-  
-  for (el in names(x)) {
-    func <- summary_funcs[[el]]
-    obj <- x[[el]]
-    func(obj)
-    cat('\n')
-  }
-  
-  cat("Detailed Information:\n")
-  cat("To review detailed diagnostic information for each variable,\n")
-  cat("access this object as a list with `$`.\n")
-}

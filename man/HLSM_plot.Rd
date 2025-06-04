@@ -37,7 +37,7 @@ logical to indicate whether message about order of covariates is included with p
 }
 
 \details{
-The plots show posterior means and 50 and 95 credible intervals.
+The plots show posterior means and 50 and 95 percent equal-tailed credible intervals.
 }
 
 \value{No return value, makes a plot in plotting window}

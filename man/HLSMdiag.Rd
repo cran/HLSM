@@ -12,7 +12,7 @@
 
 HLSMdiag(object, burnin = 0,
          diags = c('psrf', 'raftery', 'traceplot', 'autocorr'),
-         col = 1:6, lty = 1, verbose=TRUE)
+         col = 1:6, lty = 1)
 }
 
 \arguments{
@@ -36,12 +36,12 @@ HLSMdiag(object, burnin = 0,
 \item{lty}{
   a character or integer vector specifying the linetype for the traceplot and autocorr plot
 }
-\item{verbose}{logical value that determines whether output is printed}
 }
 
 
+
 \value{
-    Returns an object of class "HLSMdiag". It is a list that contains variable-level diagnostic tables from either or both of the raftery diagnostic and psrf diagnostic. When returned to the console, a summary table of the diagnostics will be printed instead of the list representation of the object.
+    Returns an object of class "HLSMdiag". It is a list that contains variable-level diagnostic tables from either or both of the raftery diagnostic and psrf diagnostic.
     \item{call}{
       the matched call.    
     }
@@ -52,6 +52,8 @@ HLSMdiag(object, burnin = 0,
       list containing \code{psrf}, a matrix of psrf estimates and upper limits for variable, and \code{mpsrf} the multivariate psrf estimate.
     }
 }
+
+
 
 \author{
     Christian Meyer

@@ -21,5 +21,4 @@ export("HLSMrandomEF",
        
 
 S3method('print','HLSM')
-S3method('print','HLSMdiag')
 S3method('summary','HLSM')
